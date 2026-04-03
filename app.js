@@ -155,7 +155,15 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, pw })
       });
-      const data = await res.json();
+      const responseText = await res.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch(e) {
+        toast('❌ 서버 구조체 오류: ' + res.status + ' ' + responseText.substring(0, 50));
+        btn.textContent = originalBtnText;
+        return;
+      }
       btn.textContent = originalBtnText;
 
       if (!res.ok) { toast('❌ ' + (data.error || '아이디 또는 비밀번호가 잘못되었습니다')); return; }
@@ -172,7 +180,7 @@
       toast('✅ 환영합니다, ' + data.name + '님!');
     } catch(err) {
       btn.textContent = originalBtnText;
-      toast('❌ 서버 연결 오류');
+      toast('❌ 서버 연결 불안정: ' + err.message);
     }
   }
 
