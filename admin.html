@@ -99,7 +99,6 @@
 (function(){
   'use strict';
 
-  // ── DB helpers ──
   function getDB(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch(e) { return fallback; } }
   function setDB(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
   function toast(msg) {
@@ -108,11 +107,9 @@
     setTimeout(function(){ t.classList.remove('show'); }, 2600);
   }
 
-  // ── Auth ──
   var authWrap = document.getElementById('admin-auth');
   var panel = document.getElementById('admin-panel');
 
-  // Check session
   var session = getDB('session', null);
   if (session && session.role === 'admin') {
     authWrap.style.display = 'none';
@@ -121,25 +118,36 @@
     initAdmin();
   }
 
-  document.getElementById('admin-login-btn').addEventListener('click', function(){
+  document.getElementById('admin-login-btn').addEventListener('click', async function(){
     var id = document.getElementById('admin-login-id').value.trim();
     var pw = document.getElementById('admin-login-pw').value;
     if (!id || !pw) { toast('아이디와 비밀번호를 입력하세요'); return; }
 
-    var users = getDB('users', []);
-    var user = null;
-    for (var i = 0; i < users.length; i++) {
-      if (users[i].id === id && users[i].pw === pw) { user = users[i]; break; }
-    }
-    if (!user) { toast('❌ 아이디 또는 비밀번호가 잘못되었습니다'); return; }
-    if (user.role !== 'admin') { toast('❌ 관리자 권한이 없습니다'); return; }
+    var btn = this;
+    var orig = btn.textContent;
+    btn.textContent = '로그인 중...';
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, pw })
+      });
+      const data = await res.json();
+      btn.textContent = orig;
 
-    setDB('session', { id: user.id, name: user.name, role: user.role });
-    authWrap.style.display = 'none';
-    panel.style.display = '';
-    document.getElementById('admin-user-name').textContent = user.name + ' 님';
-    toast('✅ 로그인 성공!');
-    initAdmin();
+      if (!res.ok) { toast('❌ ' + (data.error || '아이디 또는 비밀번호가 잘못되었습니다')); return; }
+      if (data.role !== 'admin') { toast('❌ 관리자 권한이 없습니다'); return; }
+
+      setDB('session', { id: data.id, name: data.name, role: data.role });
+      authWrap.style.display = 'none';
+      panel.style.display = '';
+      document.getElementById('admin-user-name').textContent = data.name + ' 님';
+      toast('✅ 로그인 성공!');
+      initAdmin();
+    } catch(err) {
+      btn.textContent = orig;
+      toast('❌ 서버 오류');
+    }
   });
 
   document.getElementById('admin-logout').addEventListener('click', function(){
@@ -147,10 +155,37 @@
     location.reload();
   });
 
-  // ── Admin Panel ──
   var emojis = ['🍚','🍲','🍜','🥩','🍗','🍖','🥘','🐟','🥬','🌿','🥒','🥗','🥦','🥚','🧆','🥛','🧃','🍊','🍎','🍌','🍰','🍞','🌽','🥕','🧀','🍕','🍔','🥟','🍣','🥮'];
+  let cachedMeals = {};
+  let cachedUsers = [];
 
-  function initAdmin() {
+  async function fetchAllData() {
+    try {
+      const [resM, resU] = await Promise.all([fetch('/api/meals'), fetch('/api/users')]);
+      if(resM.ok) cachedMeals = await resM.json();
+      if(resU.ok) cachedUsers = await resU.json();
+    } catch (e) {
+      console.warn('Network error', e);
+    }
+  }
+
+  async function saveMealsToCloud() {
+    try {
+      const res = await fetch('/api/meals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cachedMeals)
+      });
+      if(res.ok) return true;
+      return false;
+    } catch(e) { return false; }
+  }
+
+  async function initAdmin() {
+    document.getElementById('btn-save').textContent = '데이터 불러오는 중...';
+    await fetchAllData();
+    document.getElementById('btn-save').textContent = '💾 저장하기';
+
     var pickDate = document.getElementById('pick-date');
     var d = new Date();
     pickDate.value = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -163,29 +198,47 @@
     document.getElementById('add-lunch').addEventListener('click', function(){ addRow('lunch'); });
     document.getElementById('add-dinner').addEventListener('click', function(){ addRow('dinner'); });
 
-    document.getElementById('btn-save').addEventListener('click', function(){
+    document.getElementById('btn-save').addEventListener('click', async function(){
       var dateVal = pickDate.value;
       if (!dateVal) { toast('📅 날짜를 선택하세요'); return; }
       var lunch = readRows('lunch');
       var dinner = readRows('dinner');
       if (lunch.length === 0 && dinner.length === 0) { toast('메뉴를 하나 이상 추가하세요'); return; }
-      var all = getDB('mealData', {});
-      all[dateVal] = { lunch: lunch, dinner: dinner };
-      setDB('mealData', all);
-      toast('✅ '+dateVal+' 급식 저장 완료!');
-      renderSaved();
+      
+      cachedMeals[dateVal] = { lunch: lunch, dinner: dinner };
+      
+      var btn = this;
+      btn.textContent = '저장 중...';
+      const ok = await saveMealsToCloud();
+      btn.textContent = '💾 저장하기';
+      
+      if(ok) {
+        toast('✅ '+dateVal+' 급식 저장 완료!');
+        renderSaved();
+      } else {
+        toast('❌ 저장 실패');
+      }
     });
 
-    document.getElementById('btn-clear-day').addEventListener('click', function(){
+    document.getElementById('btn-clear-day').addEventListener('click', async function(){
       var dateVal = pickDate.value;
       if (!dateVal) return;
       if (!confirm(dateVal+' 급식 데이터를 삭제할까요?')) return;
-      var all = getDB('mealData', {});
-      delete all[dateVal];
-      setDB('mealData', all);
-      loadDate(dateVal);
-      renderSaved();
-      toast('🗑 삭제되었습니다');
+      
+      delete cachedMeals[dateVal];
+      
+      var orig = this.textContent;
+      this.textContent = '삭제 중...';
+      const ok = await saveMealsToCloud();
+      this.textContent = orig;
+
+      if(ok) {
+        loadDate(dateVal);
+        renderSaved();
+        toast('🗑 삭제되었습니다');
+      } else {
+        toast('❌ 삭제 실패');
+      }
     });
   }
 
@@ -224,8 +277,7 @@
   }
 
   function loadDate(dateStr) {
-    var all = getDB('mealData', {});
-    var data = all[dateStr];
+    var data = cachedMeals[dateStr];
     document.getElementById('lunch-list').innerHTML = '';
     document.getElementById('dinner-list').innerHTML = '';
     document.getElementById('lunch-empty').style.display = '';
@@ -265,8 +317,7 @@
   }
 
   function renderSaved() {
-    var all = getDB('mealData', {});
-    var keys = Object.keys(all).sort().reverse();
+    var keys = Object.keys(cachedMeals).sort().reverse();
     var el = document.getElementById('saved-list');
     if (keys.length === 0) {
       el.innerHTML = '<p class="empty-note">저장된 급식 정보가 없습니다</p>';
@@ -274,7 +325,7 @@
     }
     var html = '<div class="saved-table">';
     keys.forEach(function(k){
-      var d = all[k];
+      var d = cachedMeals[k];
       var lNames = (d.lunch||[]).map(function(m){return m.emoji+' '+m.name;}).join(', ');
       var dNames = (d.dinner||[]).map(function(m){return m.emoji+' '+m.name;}).join(', ');
       html += '<div class="saved-row">'+
@@ -290,27 +341,37 @@
     el.innerHTML = html;
     var delBtns = el.querySelectorAll('.btn-del-saved');
     for (var i = 0; i < delBtns.length; i++) {
-      delBtns[i].addEventListener('click', function(){
+      delBtns[i].addEventListener('click', async function(){
         var key = this.getAttribute('data-key');
         if (!confirm(key+' 데이터를 삭제할까요?')) return;
-        var a = getDB('mealData', {});
-        delete a[key];
-        setDB('mealData', a);
-        renderSaved();
-        toast('삭제되었습니다');
+        
+        var origItem = cachedMeals[key];
+        delete cachedMeals[key];
+        
+        var origText = this.textContent;
+        this.textContent = '...';
+        const ok = await saveMealsToCloud();
+        
+        if(ok) {
+          renderSaved();
+          toast('삭제되었습니다');
+        } else {
+          cachedMeals[key] = origItem; // rollback
+          this.textContent = origText;
+          toast('❌ 서버 오류');
+        }
       });
     }
   }
 
   function renderUsers() {
-    var users = getDB('users', []);
     var el = document.getElementById('user-list');
-    if (users.length === 0) {
+    if (cachedUsers.length === 0) {
       el.innerHTML = '<p class="empty-note">등록된 사용자가 없습니다</p>';
       return;
     }
     var html = '<div class="user-table"><div class="ut-head"><span>이름</span><span>아이디</span><span>역할</span></div>';
-    users.forEach(function(u){
+    cachedUsers.forEach(function(u){
       var roleLabel = u.role === 'admin' ? '👨‍🍳 관리자' : '🧑‍🎓 학생';
       html += '<div class="ut-row"><span>'+u.name+'</span><span>'+u.id+'</span><span class="role-tag '+(u.role==='admin'?'role-admin':'role-student')+'">'+roleLabel+'</span></div>';
     });

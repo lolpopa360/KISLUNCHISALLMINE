@@ -36,9 +36,9 @@
     t.classList.add('show');
     setTimeout(function () { t.classList.remove('show'); }, 2600);
   }
+  let cachedMeals = {};
   function loadMeals(dateStr) {
-    var all = getDB('mealData', {});
-    return all[dateStr] || null;
+    return cachedMeals[dateStr] || null;
   }
 
   // ── State ──
@@ -55,12 +55,23 @@
 
   // Check existing session
   var existingSession = getDB('session', null);
+  
+  async function loadDataAndInit() {
+    try {
+      const res = await fetch('/api/meals');
+      if (res.ok) cachedMeals = await res.json();
+    } catch (e) {
+      console.warn('API error, fallback to offline', e);
+    }
+    initApp();
+  }
+
   if (existingSession) {
     currentUser = existingSession;
     authScreen.classList.remove('active');
     authScreen.style.display = 'none';
     mainScreen.classList.add('active');
-    setTimeout(initApp, 50);
+    loadDataAndInit();
   }
 
   // Toggle forms
@@ -81,61 +92,88 @@
       for (var i = 0; i < roleBtns.length; i++) roleBtns[i].classList.remove('active');
       this.classList.add('active');
       selectedRole = this.getAttribute('data-role');
+      var codeGroup = $('signup-admin-code-group');
+      if (codeGroup) {
+        codeGroup.style.display = selectedRole === 'admin' ? '' : 'none';
+        if (selectedRole !== 'admin') $('signup-admin-code').value = '';
+      }
     });
   }
 
   // SIGNUP
-  $('btn-signup').addEventListener('click', function () {
+  $('btn-signup').addEventListener('click', async function () {
     var name = $('signup-name').value.trim();
     var id = $('signup-id').value.trim();
     var pw = $('signup-pw').value;
+    var adminInput = $('signup-admin-code');
+    var adminCode = adminInput ? adminInput.value.trim() : '';
 
     if (!name || !id || !pw) { toast('모든 항목을 입력해주세요'); return; }
     if (pw.length < 4) { toast('비밀번호는 4자 이상이어야 해요'); return; }
+    if (selectedRole === 'admin' && !adminCode) { toast('관리자 보안 코드를 입력해주세요'); return; }
 
-    var users = getDB('users', []);
-    for (var i = 0; i < users.length; i++) {
-      if (users[i].id === id) { toast('이미 사용 중인 아이디입니다'); return; }
+    var originalBtnText = this.textContent;
+    this.textContent = '처리중...';
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, id, pw, role: selectedRole, adminCode })
+      });
+      const data = await res.json();
+      this.textContent = originalBtnText;
+
+      if (!res.ok) { toast('❌ ' + (data.error || '회원가입에 실패했습니다')); return; }
+
+      toast('🎉 회원가입 완료! 로그인해주세요');
+      formSignup.style.display = 'none';
+      formLogin.style.display = '';
+      $('login-id').value = id;
+    } catch(err) {
+      this.textContent = originalBtnText;
+      toast('❌ 서버 연결 오류');
     }
-
-    var newUser = { name: name, id: id, pw: pw, role: selectedRole, createdAt: todayStr() };
-    users.push(newUser);
-    setDB('users', users);
-
-    toast('🎉 회원가입 완료! 로그인해주세요');
-    formSignup.style.display = 'none';
-    formLogin.style.display = '';
-    $('login-id').value = id;
   });
 
   // LOGIN
   $('btn-login').addEventListener('click', doLogin);
   $('login-pw').addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
 
-  function doLogin() {
+  async function doLogin() {
     var id = $('login-id').value.trim();
     var pw = $('login-pw').value;
 
     if (!id || !pw) { toast('아이디와 비밀번호를 입력하세요'); return; }
 
-    var users = getDB('users', []);
-    var found = null;
-    for (var i = 0; i < users.length; i++) {
-      if (users[i].id === id && users[i].pw === pw) { found = users[i]; break; }
+    var btn = $('btn-login');
+    var originalBtnText = btn.textContent;
+    btn.textContent = '로그인 중...';
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, pw })
+      });
+      const data = await res.json();
+      btn.textContent = originalBtnText;
+
+      if (!res.ok) { toast('❌ ' + (data.error || '아이디 또는 비밀번호가 잘못되었습니다')); return; }
+
+      currentUser = { id: data.id, name: data.name, role: data.role };
+      setDB('session', currentUser);
+
+      authScreen.classList.remove('active');
+      setTimeout(function () {
+        authScreen.style.display = 'none';
+        mainScreen.classList.add('active');
+        loadDataAndInit();
+      }, 400);
+      toast('✅ 환영합니다, ' + data.name + '님!');
+    } catch(err) {
+      btn.textContent = originalBtnText;
+      toast('❌ 서버 연결 오류');
     }
-
-    if (!found) { toast('❌ 아이디 또는 비밀번호가 잘못되었습니다'); return; }
-
-    currentUser = { id: found.id, name: found.name, role: found.role };
-    setDB('session', currentUser);
-
-    authScreen.classList.remove('active');
-    setTimeout(function () {
-      authScreen.style.display = 'none';
-      mainScreen.classList.add('active');
-      initApp();
-    }, 400);
-    toast('✅ 환영합니다, ' + found.name + '님!');
   }
 
   // LOGOUT

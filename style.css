@@ -206,6 +206,16 @@ input, select { font-family: inherit; }
   border-color: var(--green-accent);
   box-shadow: 0 0 0 4px rgba(76,175,80,.1);
 }
+
+#signup-admin-code-group {
+  animation: slideDown 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .auth-input-group input::placeholder,
 .form-input::placeholder { color: var(--text-placeholder); }
 
