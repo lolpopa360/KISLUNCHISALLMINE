@@ -207,6 +207,7 @@
     renderNutrition();
     renderAllergy();
     setupUpload();
+    initFeedDateNav();
 
     $('goto-photo').addEventListener('click', function () { goPage('photo'); });
     $('btn-bell').addEventListener('click', function () { toast('🔔 새로운 알림이 없습니다'); });
@@ -443,16 +444,41 @@
   }
 
   // ═══ PHOTO FEED ═══
+  var feedDate = todayStr();
+
+  function initFeedDateNav() {
+    var dateInput = $('feed-date');
+    dateInput.value = feedDate;
+    dateInput.addEventListener('change', function() {
+      feedDate = this.value;
+      renderFeed();
+    });
+    $('feed-prev').addEventListener('click', function() {
+      var d = new Date(feedDate);
+      d.setDate(d.getDate() - 1);
+      feedDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      $('feed-date').value = feedDate;
+      renderFeed();
+    });
+    $('feed-next').addEventListener('click', function() {
+      var d = new Date(feedDate);
+      d.setDate(d.getDate() + 1);
+      feedDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      $('feed-date').value = feedDate;
+      renderFeed();
+    });
+  }
+
   async function renderFeed() {
     var list = $('feed-list');
     list.innerHTML = '<div class="empty-state"><p>사진을 불러오는 중...</p></div>';
     
     try {
-      const res = await fetch('/api/photos?date=' + todayStr());
+      const res = await fetch('/api/photos?date=' + feedDate);
       if (res.ok) {
         const photos = await res.json();
         if (photos.length === 0) {
-          list.innerHTML = '<div class="empty-state"><p>📸 아직 올라온 사진이 없어요</p></div>';
+          list.innerHTML = '<div class="empty-state"><p>📸 이 날짜에 올라온 사진이 없어요</p></div>';
           var tz = $('photo-teaser');
           if(tz) tz.style.display = 'none';
           return;
@@ -625,7 +651,10 @@
     var previewBox = $('upload-preview');
     var previewImg = $('upload-preview-img');
 
-    $('btn-fab').addEventListener('click', function () { modal.classList.add('show'); });
+    $('btn-fab').addEventListener('click', function () { 
+      $('upload-date').value = todayStr();
+      modal.classList.add('show'); 
+    });
     $('upload-close').addEventListener('click', closeUpload);
     modal.addEventListener('click', function (e) { if (e.target === modal) closeUpload(); });
 
@@ -667,11 +696,13 @@
         
         var base64 = canvas.toDataURL('image/jpeg', 0.8);
         
+        var uploadDate = $('upload-date').value || todayStr();
+        
         const res = await fetch('/api/photos', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            date: todayStr(), 
+            date: uploadDate, 
             photoBase64: base64, 
             user: currentUser ? currentUser.name : '익명'
           })
