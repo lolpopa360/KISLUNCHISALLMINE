@@ -3,7 +3,7 @@ export async function onRequestPost({ request, env }) {
     const { name, id, pw, role, adminCode } = await request.json();
     if (!name || !id || !pw) return new Response("Bad Request", { status: 400 });
 
-    if (role === 'admin' && adminCode !== 'KIS_ADMIN_2026') {
+    if (role === 'admin' && adminCode !== 'KIS_lunch_admin(yang)') {
       return new Response(JSON.stringify({ error: "관리자 인증 코드가 올바르지 않습니다." }), { 
         status: 403, 
         headers: { 'Content-Type': 'application/json' } 
