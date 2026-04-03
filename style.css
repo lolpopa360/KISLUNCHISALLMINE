@@ -71,8 +71,6 @@ input, button, select { font-family: inherit; }
    ═══════════════════════════════════ */
 #app {
   width: 100%;
-  max-width: 430px;
-  margin: 0 auto;
   height: 100vh;
   height: 100dvh;
   position: relative;
@@ -98,24 +96,21 @@ input, button, select { font-family: inherit; }
   z-index: 1;
 }
 
-/* Desktop phone frame */
-@media (min-width: 431px) {
-  body:not(.body-admin) {
-    background: linear-gradient(160deg, #e8edf2 0%, #d1d5db 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  #app {
-    border-radius: 44px;
-    overflow: hidden;
-    height: min(92vh, 860px);
-    box-shadow:
-      0 0 0 6px #1a1a1a,
-      0 0 0 8px #333,
-      0 25px 80px rgba(0,0,0,.3),
-      0 0 120px rgba(22,163,74,.08);
-  }
+/* Responsive desktop — full screen, no phone frame */
+@media (min-width: 768px) {
+  .menu-grid { grid-template-columns: repeat(3, 1fr); }
+  .stat-grid { grid-template-columns: repeat(6, 1fr); }
+  .feed-list { max-width: 600px; margin: 0 auto; }
+  .section-card { max-width: 600px; margin-left: auto; margin-right: auto; margin-bottom: 16px; }
+  #cal-detail { max-width: 600px; margin-left: auto; margin-right: auto; }
+  .detail-body { max-width: 600px; margin: 0 auto; }
+  .kcal-banner, .home-welcome, .tab-bar, .page-top, .nut-hero, .detail-hero { text-align: center; }
+  .kcal-banner { justify-content: center; gap: 24px; }
+  .week-strip { justify-content: center; }
+  .allergy-tags { justify-content: center; }
+  #allergy-cards { max-width: 600px; margin-left: auto; margin-right: auto; }
+  .insight-card, .stat-grid { max-width: 600px; margin-left: auto; margin-right: auto; }
+  .nut-numbers { justify-content: center; }
 }
 
 /* ═══════════════════════════════════
@@ -340,21 +335,12 @@ input, button, select { font-family: inherit; }
 }
 
 /* ═══════════════════════════════════
-   STATUS BAR
+   STATUS BAR (hidden in real app)
    ═══════════════════════════════════ */
 .status-bar {
-  height: var(--status-h);
-  background: var(--surface);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--ink);
-  flex-shrink: 0;
+  display: none;
 }
-.status-right { display: flex; align-items: center; gap: 4px; }
+.status-right { display: none; }
 
 /* ═══════════════════════════════════
    APPBAR
@@ -941,14 +927,14 @@ input, button, select { font-family: inherit; }
 .fab {
   position: fixed;
   bottom: calc(var(--nav-h) + 16px);
-  right: calc(50% - 195px);
-  width: 48px;
-  height: 48px;
+  right: 24px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: var(--green);
   color: #fff;
   border: none;
-  box-shadow: 0 4px 16px rgba(22,163,74,.35);
+  box-shadow: 0 4px 20px rgba(22,163,74,.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -956,7 +942,6 @@ input, button, select { font-family: inherit; }
   transition: transform .2s var(--spring);
 }
 .fab:active { transform: scale(.85); }
-@media (max-width: 430px) { .fab { right: 20px; } }
 
 /* ═══════════════════════════════════
    NUTRITION
@@ -1149,7 +1134,7 @@ input, button, select { font-family: inherit; }
 .modal-sheet {
   background: var(--bg);
   width: 100%;
-  max-width: 430px;
+  max-width: 540px;
   max-height: 85vh;
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   overflow-y: auto;
