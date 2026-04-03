@@ -1,0 +1,16 @@
+name = "kisfoodisgood"
+main = "src/index.js"
+compatibility_date = "2024-04-03"
+type = "service"
+
+[env.production]
+vars = { ENV = "production" }
+kv_namespaces = [
+  { binding = "GEUBSIK_DB", id = "your-kv-namespace-id", preview_id = "your-preview-id" }
+]
+
+[env.preview]
+vars = { ENV = "preview" }
+kv_namespaces = [
+  { binding = "GEUBSIK_DB", id = "your-kv-namespace-id", preview_id = "your-preview-id" }
+]
