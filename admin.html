@@ -2,215 +2,322 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>오늘급식 — 관리자</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>급식뭐지 — 관리자</title>
+  <meta name="description" content="급식뭐지 관리자 패널">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="admin-body">
-<div class="admin-wrap">
+<body class="body-admin">
 
-  <header class="admin-header">
-    <div>
-      <h1>🍙 오늘급식 <span class="text-g">관리자</span></h1>
-      <p class="muted">급식 · 석식 메뉴를 등록하고 관리하세요</p>
+<!-- AUTH GATE -->
+<div id="admin-auth" class="admin-auth-wrap">
+  <div class="admin-auth-card">
+    <div class="admin-auth-logo">
+      <img src="assets/mascot.png" alt="" style="width:56px" onerror="this.style.display='none'">
+      <h1>급식<span class="text-accent">뭐지</span> <small>관리자</small></h1>
     </div>
-    <a href="index.html" class="btn-outline">← 앱으로 돌아가기</a>
+    <div class="auth-input-group">
+      <label>아이디</label>
+      <input type="text" id="admin-login-id" placeholder="관리자 아이디" class="form-input">
+    </div>
+    <div class="auth-input-group">
+      <label>비밀번호</label>
+      <input type="password" id="admin-login-pw" placeholder="비밀번호" class="form-input">
+    </div>
+    <button class="btn-primary" id="admin-login-btn">관리자 로그인</button>
+    <p class="admin-auth-note">⚠️ 관리자 역할로 가입된 계정만 로그인 가능합니다</p>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="admin-panel" class="admin-panel" style="display:none">
+  <header class="admin-topbar">
+    <div class="admin-topbar-left">
+      <img src="assets/mascot.png" alt="" style="width:32px" onerror="this.style.display='none'">
+      <h1>급식<span class="text-accent">뭐지</span> <small>관리자</small></h1>
+    </div>
+    <div class="admin-topbar-right">
+      <span class="admin-user" id="admin-user-name">관리자</span>
+      <a href="index.html" class="btn-outline-sm">앱 보기 →</a>
+      <button class="btn-outline-sm btn-danger-outline" id="admin-logout">로그아웃</button>
+    </div>
   </header>
 
-  <!-- date picker -->
-  <div class="admin-card">
-    <label class="field-label">📅 날짜 선택</label>
-    <input type="date" class="field" id="pick-date">
-  </div>
+  <main class="admin-main">
+    <!-- DATE -->
+    <section class="admin-card">
+      <h3>📅 날짜 선택</h3>
+      <input type="date" class="form-input" id="pick-date">
+    </section>
 
-  <!-- LUNCH -->
-  <div class="admin-card">
-    <div class="admin-card-head">
-      <h2>🌞 점심 급식</h2>
-      <button class="btn-sm btn-g" id="add-lunch">+ 메뉴 추가</button>
+    <!-- LUNCH -->
+    <section class="admin-card">
+      <div class="admin-card-header">
+        <h3>🌞 점심 급식</h3>
+        <button class="btn-sm" id="add-lunch">+ 메뉴 추가</button>
+      </div>
+      <div id="lunch-list" class="menu-editor"></div>
+      <div class="empty-editor" id="lunch-empty">메뉴를 추가해주세요</div>
+    </section>
+
+    <!-- DINNER -->
+    <section class="admin-card">
+      <div class="admin-card-header">
+        <h3>🌙 저녁 석식</h3>
+        <button class="btn-sm" id="add-dinner">+ 메뉴 추가</button>
+      </div>
+      <div id="dinner-list" class="menu-editor"></div>
+      <div class="empty-editor" id="dinner-empty">메뉴를 추가해주세요</div>
+    </section>
+
+    <!-- ACTIONS -->
+    <div class="admin-actions">
+      <button class="btn-primary btn-lg" id="btn-save">💾 저장하기</button>
+      <button class="btn-outline-sm btn-lg" id="btn-clear-day">이 날짜 삭제</button>
     </div>
-    <div id="lunch-list" class="admin-menu-list"></div>
-  </div>
 
-  <!-- DINNER -->
-  <div class="admin-card">
-    <div class="admin-card-head">
-      <h2>🌙 저녁 석식</h2>
-      <button class="btn-sm btn-g" id="add-dinner">+ 메뉴 추가</button>
-    </div>
-    <div id="dinner-list" class="admin-menu-list"></div>
-  </div>
+    <!-- SAVED LIST -->
+    <section class="admin-card">
+      <h3>📋 저장된 급식 목록</h3>
+      <div id="saved-list"></div>
+    </section>
 
-  <!-- SAVE -->
-  <div class="admin-actions">
-    <button class="btn-g btn-big" id="btn-save">💾 저장하기</button>
-    <button class="btn-outline btn-big" id="btn-clear">🗑 초기화</button>
-  </div>
-
-  <!-- SAVED LIST -->
-  <div class="admin-card">
-    <h2>📋 저장된 급식 목록</h2>
-    <div id="saved-list" class="saved-list"></div>
-  </div>
-
+    <!-- USER MANAGEMENT -->
+    <section class="admin-card">
+      <h3>👥 사용자 관리</h3>
+      <div id="user-list"></div>
+    </section>
+  </main>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 (function(){
-  var pickDate = document.getElementById('pick-date');
-  var lunchList = document.getElementById('lunch-list');
-  var dinnerList = document.getElementById('dinner-list');
-  var savedList = document.getElementById('saved-list');
-  var toastEl = document.getElementById('toast');
+  'use strict';
 
-  // Default date = today
-  var today = new Date();
-  pickDate.value = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
-
-  // Emoji options
-  var emojis = ['🍚','🍲','🍜','🥩','🍗','🍖','🥘','🐟','🥬','🌿','🥒','🥗','🥦','🥚','🧆','🥛','🧃','🍊','🍎','🍌','🍰','🍞'];
-
-  function makeMenuRow(data) {
-    var row = document.createElement('div');
-    row.className = 'admin-row';
-
-    row.innerHTML =
-      '<select class="field field-sm emoji-sel">' +
-        emojis.map(function(e){ return '<option' + (data && data.emoji === e ? ' selected' : '') + '>' + e + '</option>'; }).join('') +
-      '</select>' +
-      '<input type="text" class="field field-grow" placeholder="메뉴 이름" value="' + (data ? data.name : '') + '">' +
-      '<input type="number" class="field field-num" placeholder="kcal" value="' + (data ? data.kcal : '') + '">' +
-      '<input type="text" class="field field-md" placeholder="알레르기 (없으면 비움)" value="' + (data ? (data.allergy || '') : '') + '">' +
-      '<button class="btn-del">✕</button>';
-
-    row.querySelector('.btn-del').addEventListener('click', function(){ row.remove(); });
-    return row;
+  // ── DB helpers ──
+  function getDB(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch(e) { return fallback; } }
+  function setDB(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 2600);
   }
 
-  document.getElementById('add-lunch').addEventListener('click', function(){
-    lunchList.appendChild(makeMenuRow());
-  });
-  document.getElementById('add-dinner').addEventListener('click', function(){
-    dinnerList.appendChild(makeMenuRow());
+  // ── Auth ──
+  var authWrap = document.getElementById('admin-auth');
+  var panel = document.getElementById('admin-panel');
+
+  // Check session
+  var session = getDB('session', null);
+  if (session && session.role === 'admin') {
+    authWrap.style.display = 'none';
+    panel.style.display = '';
+    document.getElementById('admin-user-name').textContent = session.name + ' 님';
+    initAdmin();
+  }
+
+  document.getElementById('admin-login-btn').addEventListener('click', function(){
+    var id = document.getElementById('admin-login-id').value.trim();
+    var pw = document.getElementById('admin-login-pw').value;
+    if (!id || !pw) { toast('아이디와 비밀번호를 입력하세요'); return; }
+
+    var users = getDB('users', []);
+    var user = null;
+    for (var i = 0; i < users.length; i++) {
+      if (users[i].id === id && users[i].pw === pw) { user = users[i]; break; }
+    }
+    if (!user) { toast('❌ 아이디 또는 비밀번호가 잘못되었습니다'); return; }
+    if (user.role !== 'admin') { toast('❌ 관리자 권한이 없습니다'); return; }
+
+    setDB('session', { id: user.id, name: user.name, role: user.role });
+    authWrap.style.display = 'none';
+    panel.style.display = '';
+    document.getElementById('admin-user-name').textContent = user.name + ' 님';
+    toast('✅ 로그인 성공!');
+    initAdmin();
   });
 
-  function readRows(container) {
-    var rows = container.querySelectorAll('.admin-row');
+  document.getElementById('admin-logout').addEventListener('click', function(){
+    localStorage.removeItem('session');
+    location.reload();
+  });
+
+  // ── Admin Panel ──
+  var emojis = ['🍚','🍲','🍜','🥩','🍗','🍖','🥘','🐟','🥬','🌿','🥒','🥗','🥦','🥚','🧆','🥛','🧃','🍊','🍎','🍌','🍰','🍞','🌽','🥕','🧀','🍕','🍔','🥟','🍣','🥮'];
+
+  function initAdmin() {
+    var pickDate = document.getElementById('pick-date');
+    var d = new Date();
+    pickDate.value = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+
+    loadDate(pickDate.value);
+    renderSaved();
+    renderUsers();
+
+    pickDate.addEventListener('change', function(){ loadDate(this.value); });
+    document.getElementById('add-lunch').addEventListener('click', function(){ addRow('lunch'); });
+    document.getElementById('add-dinner').addEventListener('click', function(){ addRow('dinner'); });
+
+    document.getElementById('btn-save').addEventListener('click', function(){
+      var dateVal = pickDate.value;
+      if (!dateVal) { toast('📅 날짜를 선택하세요'); return; }
+      var lunch = readRows('lunch');
+      var dinner = readRows('dinner');
+      if (lunch.length === 0 && dinner.length === 0) { toast('메뉴를 하나 이상 추가하세요'); return; }
+      var all = getDB('mealData', {});
+      all[dateVal] = { lunch: lunch, dinner: dinner };
+      setDB('mealData', all);
+      toast('✅ '+dateVal+' 급식 저장 완료!');
+      renderSaved();
+    });
+
+    document.getElementById('btn-clear-day').addEventListener('click', function(){
+      var dateVal = pickDate.value;
+      if (!dateVal) return;
+      if (!confirm(dateVal+' 급식 데이터를 삭제할까요?')) return;
+      var all = getDB('mealData', {});
+      delete all[dateVal];
+      setDB('mealData', all);
+      loadDate(dateVal);
+      renderSaved();
+      toast('🗑 삭제되었습니다');
+    });
+  }
+
+  function addRow(type) {
+    var list = document.getElementById(type+'-list');
+    var empty = document.getElementById(type+'-empty');
+    empty.style.display = 'none';
+
+    var row = document.createElement('div');
+    row.className = 'editor-row';
+    var optHtml = '';
+    for (var i = 0; i < emojis.length; i++) optHtml += '<option>'+emojis[i]+'</option>';
+    row.innerHTML =
+      '<select class="form-input fi-emoji">'+optHtml+'</select>'+
+      '<input type="text" class="form-input fi-name" placeholder="메뉴 이름">'+
+      '<input type="number" class="form-input fi-kcal" placeholder="kcal">'+
+      '<input type="text" class="form-input fi-allergy" placeholder="알레르기 (없으면 비움)">'+
+      '<button class="btn-del-row">✕</button>';
+    row.querySelector('.btn-del-row').addEventListener('click', function(){
+      row.remove();
+      if (list.children.length === 0) empty.style.display = '';
+    });
+    list.appendChild(row);
+  }
+
+  function readRows(type) {
+    var rows = document.getElementById(type+'-list').querySelectorAll('.editor-row');
     var arr = [];
     for (var i = 0; i < rows.length; i++) {
-      var fields = rows[i].querySelectorAll('.field');
-      var name = fields[1].value.trim();
+      var inputs = rows[i].querySelectorAll('.form-input');
+      var name = inputs[1].value.trim();
       if (!name) continue;
-      arr.push({
-        emoji: fields[0].value,
-        name: name,
-        kcal: parseInt(fields[2].value) || 0,
-        allergy: fields[3].value.trim() || null
-      });
+      arr.push({ emoji: inputs[0].value, name: name, kcal: parseInt(inputs[2].value)||0, allergy: inputs[3].value.trim()||null });
     }
     return arr;
   }
 
-  // SAVE
-  document.getElementById('btn-save').addEventListener('click', function(){
-    var dateVal = pickDate.value;
-    if (!dateVal) { showToast('📅 날짜를 선택하세요'); return; }
-
-    var lunch = readRows(lunchList);
-    var dinner = readRows(dinnerList);
-
-    if (lunch.length === 0 && dinner.length === 0) {
-      showToast('메뉴를 하나 이상 추가하세요');
-      return;
-    }
-
-    // Load existing
-    var all = JSON.parse(localStorage.getItem('mealData') || '{}');
-    all[dateVal] = { lunch: lunch, dinner: dinner };
-    localStorage.setItem('mealData', JSON.stringify(all));
-
-    showToast('✅ ' + dateVal + ' 급식 정보가 저장되었습니다!');
-    renderSaved();
-  });
-
-  // CLEAR
-  document.getElementById('btn-clear').addEventListener('click', function(){
-    if (confirm('정말 모든 급식 데이터를 삭제할까요?')) {
-      localStorage.removeItem('mealData');
-      lunchList.innerHTML = '';
-      dinnerList.innerHTML = '';
-      renderSaved();
-      showToast('🗑 데이터가 초기화되었습니다');
-    }
-  });
-
-  // Load existing date
-  pickDate.addEventListener('change', function(){
-    loadDate(pickDate.value);
-  });
-
-  function loadDate(d) {
-    var all = JSON.parse(localStorage.getItem('mealData') || '{}');
-    var data = all[d];
-    lunchList.innerHTML = '';
-    dinnerList.innerHTML = '';
+  function loadDate(dateStr) {
+    var all = getDB('mealData', {});
+    var data = all[dateStr];
+    document.getElementById('lunch-list').innerHTML = '';
+    document.getElementById('dinner-list').innerHTML = '';
+    document.getElementById('lunch-empty').style.display = '';
+    document.getElementById('dinner-empty').style.display = '';
     if (data) {
-      (data.lunch || []).forEach(function(m){ lunchList.appendChild(makeMenuRow(m)); });
-      (data.dinner || []).forEach(function(m){ dinnerList.appendChild(makeMenuRow(m)); });
+      if (data.lunch && data.lunch.length > 0) {
+        document.getElementById('lunch-empty').style.display = 'none';
+        data.lunch.forEach(function(m){ addRowWithData('lunch', m); });
+      }
+      if (data.dinner && data.dinner.length > 0) {
+        document.getElementById('dinner-empty').style.display = 'none';
+        data.dinner.forEach(function(m){ addRowWithData('dinner', m); });
+      }
     }
   }
 
+  function addRowWithData(type, data) {
+    var list = document.getElementById(type+'-list');
+    var row = document.createElement('div');
+    row.className = 'editor-row';
+    var optHtml = '';
+    for (var i = 0; i < emojis.length; i++) {
+      optHtml += '<option'+(emojis[i]===data.emoji?' selected':'')+'>'+emojis[i]+'</option>';
+    }
+    row.innerHTML =
+      '<select class="form-input fi-emoji">'+optHtml+'</select>'+
+      '<input type="text" class="form-input fi-name" value="'+data.name+'">'+
+      '<input type="number" class="form-input fi-kcal" value="'+(data.kcal||'')+'" placeholder="kcal">'+
+      '<input type="text" class="form-input fi-allergy" value="'+(data.allergy||'')+'" placeholder="알레르기">'+
+      '<button class="btn-del-row">✕</button>';
+    row.querySelector('.btn-del-row').addEventListener('click', function(){
+      row.remove();
+      var empty = document.getElementById(type+'-empty');
+      if (list.children.length === 0) empty.style.display = '';
+    });
+    list.appendChild(row);
+  }
+
   function renderSaved() {
-    var all = JSON.parse(localStorage.getItem('mealData') || '{}');
+    var all = getDB('mealData', {});
     var keys = Object.keys(all).sort().reverse();
+    var el = document.getElementById('saved-list');
     if (keys.length === 0) {
-      savedList.innerHTML = '<p class="muted" style="padding:16px;text-align:center">저장된 급식 정보가 없습니다</p>';
+      el.innerHTML = '<p class="empty-note">저장된 급식 정보가 없습니다</p>';
       return;
     }
-    var html = '';
+    var html = '<div class="saved-table">';
     keys.forEach(function(k){
       var d = all[k];
-      var lNames = (d.lunch || []).map(function(m){ return m.emoji + ' ' + m.name; }).join(', ');
-      var dNames = (d.dinner || []).map(function(m){ return m.emoji + ' ' + m.name; }).join(', ');
-      html += '<div class="saved-row">' +
-        '<div class="saved-date">' + k + '</div>' +
-        '<div class="saved-menus">' +
-          (lNames ? '<p><b>점심:</b> ' + lNames + '</p>' : '') +
-          (dNames ? '<p><b>저녁:</b> ' + dNames + '</p>' : '') +
-        '</div>' +
-        '<button class="btn-del-saved" data-key="' + k + '">🗑</button>' +
+      var lNames = (d.lunch||[]).map(function(m){return m.emoji+' '+m.name;}).join(', ');
+      var dNames = (d.dinner||[]).map(function(m){return m.emoji+' '+m.name;}).join(', ');
+      html += '<div class="saved-row">'+
+        '<div class="saved-date">'+k+'</div>'+
+        '<div class="saved-menus">'+
+          (lNames?'<p><strong>점심</strong> '+lNames+'</p>':'')+
+          (dNames?'<p><strong>저녁</strong> '+dNames+'</p>':'')+
+        '</div>'+
+        '<button class="btn-del-saved" data-key="'+k+'">🗑</button>'+
       '</div>';
     });
-    savedList.innerHTML = html;
-
-    // delete buttons
-    var delBtns = savedList.querySelectorAll('.btn-del-saved');
+    html += '</div>';
+    el.innerHTML = html;
+    var delBtns = el.querySelectorAll('.btn-del-saved');
     for (var i = 0; i < delBtns.length; i++) {
       delBtns[i].addEventListener('click', function(){
         var key = this.getAttribute('data-key');
-        var a = JSON.parse(localStorage.getItem('mealData') || '{}');
+        if (!confirm(key+' 데이터를 삭제할까요?')) return;
+        var a = getDB('mealData', {});
         delete a[key];
-        localStorage.setItem('mealData', JSON.stringify(a));
+        setDB('mealData', a);
         renderSaved();
-        showToast('삭제되었습니다');
+        toast('삭제되었습니다');
       });
     }
   }
 
-  function showToast(msg) {
-    toastEl.textContent = msg;
-    toastEl.classList.add('show');
-    setTimeout(function(){ toastEl.classList.remove('show'); }, 2500);
+  function renderUsers() {
+    var users = getDB('users', []);
+    var el = document.getElementById('user-list');
+    if (users.length === 0) {
+      el.innerHTML = '<p class="empty-note">등록된 사용자가 없습니다</p>';
+      return;
+    }
+    var html = '<div class="user-table"><div class="ut-head"><span>이름</span><span>아이디</span><span>역할</span></div>';
+    users.forEach(function(u){
+      var roleLabel = u.role === 'admin' ? '👨‍🍳 관리자' : '🧑‍🎓 학생';
+      html += '<div class="ut-row"><span>'+u.name+'</span><span>'+u.id+'</span><span class="role-tag '+(u.role==='admin'?'role-admin':'role-student')+'">'+roleLabel+'</span></div>';
+    });
+    html += '</div>';
+    el.innerHTML = html;
   }
 
-  // Init
-  loadDate(pickDate.value);
-  renderSaved();
 })();
 </script>
 </body>

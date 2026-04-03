@@ -2,205 +2,290 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>오늘급식</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <title>급식뭐지</title>
+  <meta name="description" content="우리 학교 급식을 한눈에! 메뉴, 영양, 알레르기 정보를 확인하세요.">
+  <meta name="theme-color" content="#16a34a">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="app">
 
-  <!-- ══════ SPLASH ══════ -->
-  <div id="splash" class="screen active">
-    <div class="splash-top">
-      <div class="splash-deco d1"></div>
-      <div class="splash-deco d2"></div>
-      <div class="splash-deco d3"></div>
-      <div class="splash-icon">🍙</div>
+  <!-- ══════════ AUTH SCREEN ══════════ -->
+  <div id="auth-screen" class="screen active">
+    <div class="auth-bg">
+      <div class="auth-glow g1"></div>
+      <div class="auth-glow g2"></div>
     </div>
-    <div class="splash-bottom">
-      <p class="splash-over">우리 학교 밥상 앱</p>
-      <h1 class="splash-h1">오늘<span>급식</span></h1>
-      <p class="splash-sub">오늘 메뉴 한눈에 확인하고<br>영양도 챙겨요</p>
-      <button class="btn-g" id="btn-start">시작하기 →</button>
+    <div class="auth-content">
+      <div class="auth-logo-area">
+        <div class="auth-mascot">
+          <img src="assets/mascot.png" alt="급식뭐지 마스코트" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="mascot-fallback" style="display:none">🍱</div>
+        </div>
+        <h1 class="auth-title">급식<span>뭐지</span></h1>
+        <p class="auth-sub">우리 학교 급식, 한눈에 확인해요</p>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div id="form-login" class="auth-form">
+        <div class="auth-input-group">
+          <label>아이디</label>
+          <input type="text" id="login-id" placeholder="아이디를 입력하세요" autocomplete="username">
+        </div>
+        <div class="auth-input-group">
+          <label>비밀번호</label>
+          <input type="password" id="login-pw" placeholder="비밀번호를 입력하세요" autocomplete="current-password">
+        </div>
+        <button class="btn-primary" id="btn-login">로그인</button>
+        <div class="auth-switch">
+          계정이 없으신가요? <button id="goto-signup">회원가입</button>
+        </div>
+      </div>
+
+      <!-- SIGNUP FORM -->
+      <div id="form-signup" class="auth-form" style="display:none">
+        <div class="auth-input-group">
+          <label>이름</label>
+          <input type="text" id="signup-name" placeholder="이름을 입력하세요">
+        </div>
+        <div class="auth-input-group">
+          <label>아이디</label>
+          <input type="text" id="signup-id" placeholder="사용할 아이디">
+        </div>
+        <div class="auth-input-group">
+          <label>비밀번호</label>
+          <input type="password" id="signup-pw" placeholder="비밀번호 (4자 이상)">
+        </div>
+        <div class="auth-input-group">
+          <label>역할</label>
+          <div class="role-selector">
+            <button class="role-btn active" data-role="student">🧑‍🎓 학생</button>
+            <button class="role-btn" data-role="admin">👨‍🍳 관리자</button>
+          </div>
+        </div>
+        <button class="btn-primary" id="btn-signup">회원가입</button>
+        <div class="auth-switch">
+          이미 계정이 있으신가요? <button id="goto-login">로그인</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- ══════ MAIN ══════ -->
-  <div id="main" class="screen">
+  <!-- ══════════ MAIN APP ══════════ -->
+  <div id="main-screen" class="screen">
 
-    <!-- status -->
-    <div class="bar-status">
+    <!-- status bar -->
+    <div class="status-bar">
       <span id="clock">9:41</span>
-      <span class="bar-dots">● ● ●</span>
+      <div class="status-right">
+        <svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="3" width="3" height="7" rx="0.5" fill="currentColor" opacity=".4"/><rect x="4" y="2" width="3" height="8" rx="0.5" fill="currentColor" opacity=".6"/><rect x="8" y="1" width="3" height="9" rx="0.5" fill="currentColor" opacity=".8"/><rect x="12" y="0" width="3" height="10" rx="0.5" fill="currentColor"/></svg>
+        <svg width="22" height="11" viewBox="0 0 22 11"><rect x="0" y="0" width="19" height="11" rx="2" stroke="currentColor" stroke-width="1" fill="none"/><rect x="20" y="3" width="2" height="5" rx="0.5" fill="currentColor" opacity=".4"/><rect x="1.5" y="1.5" width="14" height="8" rx="1" fill="currentColor"/></svg>
+      </div>
     </div>
 
-    <!-- appbar -->
-    <header class="bar-app" id="bar-app">
-      <div class="bar-logo"><span class="bar-icon">🍙</span> 오늘<b>급식</b></div>
-      <button class="bar-bell" id="btn-bell" title="알림">🔔</button>
+    <!-- app bar: home -->
+    <header class="appbar" id="appbar-home">
+      <div class="appbar-left">
+        <div class="appbar-mascot">
+          <img src="assets/mascot.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+          <span style="display:none">🍱</span>
+        </div>
+        <span class="appbar-title">급식<b>뭐지</b></span>
+      </div>
+      <div class="appbar-right">
+        <button class="appbar-btn" id="btn-bell" title="알림">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span class="bell-dot"></span>
+        </button>
+        <button class="appbar-btn" id="btn-logout" title="로그아웃">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
     </header>
 
-    <!-- detail appbar (hidden) -->
-    <header class="bar-app bar-detail" id="bar-detail">
-      <button class="btn-back" id="btn-back">‹</button>
-      <span id="detail-title">메뉴 상세</span>
+    <!-- app bar: detail -->
+    <header class="appbar appbar-detail" id="appbar-detail">
+      <button class="back-btn" id="btn-back">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span id="detail-bar-title">상세 정보</span>
     </header>
 
-    <!-- pages -->
-    <main class="pages" id="pages">
+    <!-- PAGES -->
+    <main class="main-scroll" id="main-scroll">
 
-      <!-- ── PAGE: HOME ── -->
-      <section class="pg active" id="pg-home">
-        <div class="home-date">
-          <small id="today-text"></small>
-          <h2>오늘 급식</h2>
+      <!-- HOME -->
+      <section class="page active" id="page-home">
+        <div class="home-welcome">
+          <p class="welcome-hi" id="welcome-text">안녕하세요!</p>
+          <h2 id="date-display">오늘 급식</h2>
         </div>
-        <div class="tabs">
-          <button class="tab on" data-meal="lunch">점심 급식</button>
-          <button class="tab" data-meal="dinner">저녁 석식</button>
+        <div class="tab-bar">
+          <button class="tab active" data-meal="lunch">🌞 점심</button>
+          <button class="tab" data-meal="dinner">🌙 저녁</button>
         </div>
-        <div class="kcal-bar">
-          <div><strong id="kcal-val">0</strong> <small>kcal</small></div>
-          <small id="kcal-pct"></small>
-        </div>
-        <div class="menu-grid" id="menu-grid">
-          <!-- app.js fills from localStorage -->
-        </div>
-        <div class="no-data" id="no-data" style="display:none">
-          <p>📋 아직 등록된 급식 정보가 없어요</p>
-          <p class="sm">관리자 페이지에서 급식을 등록해주세요</p>
-        </div>
-        <div class="teaser" id="teaser">
-          <div class="teaser-head">
-            <span>📸 오늘 급식 사진</span>
-            <button class="link-g" id="go-photo">전체보기</button>
+        <div class="kcal-banner">
+          <div class="kcal-left">
+            <span class="kcal-number" id="kcal-num">0</span>
+            <span class="kcal-unit">kcal</span>
           </div>
-          <div class="teaser-body">
-            <span class="teaser-icon">📷</span>
-            <span>영양사 선생님이 곧 사진을 올려요</span>
+          <span class="kcal-desc" id="kcal-desc">관리자가 등록하면 표시됩니다</span>
+        </div>
+        <div class="menu-grid" id="menu-grid"></div>
+        <div class="empty-state" id="empty-state" style="display:none">
+          <div class="empty-mascot">
+            <img src="assets/mascot.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" style="width:64px">
+            <span style="display:none;font-size:48px">🍱</span>
+          </div>
+          <p>아직 등록된 급식 정보가 없어요</p>
+          <small>관리자가 급식을 등록하면 여기에 나타나요</small>
+        </div>
+        <div class="section-card" id="photo-teaser">
+          <div class="section-card-head">
+            <span>📸 급식 사진</span>
+            <button class="link-btn" id="goto-photo">전체보기 →</button>
+          </div>
+          <div class="teaser-empty">
+            <span>📷</span> 영양사 선생님이 곧 사진을 올려요
           </div>
         </div>
       </section>
 
-      <!-- ── PAGE: DETAIL ── -->
-      <section class="pg" id="pg-detail">
-        <div class="det-hero">
-          <div class="det-circle"><span id="det-emoji">🍚</span></div>
-          <h2 id="det-name">메뉴</h2>
-          <p class="muted" id="det-sub">0 kcal</p>
+      <!-- DETAIL -->
+      <section class="page" id="page-detail">
+        <div class="detail-hero">
+          <div class="detail-circle" id="detail-circle"><span id="detail-emoji">🍚</span></div>
+          <h2 id="detail-name">메뉴</h2>
+          <p class="detail-sub" id="detail-sub">0 kcal</p>
         </div>
-        <div class="det-section">
-          <h4 class="label">전체 성분</h4>
-          <div class="card" id="det-ings">
-            <!-- filled by JS -->
-          </div>
+        <div class="detail-body">
+          <h4 class="section-label">성분 정보</h4>
+          <div class="detail-card" id="detail-ings"></div>
+          <h4 class="section-label">영양 분석</h4>
+          <div class="detail-card" id="detail-nuts"></div>
+          <p class="source-note">* 식품의약품안전처 영양성분 DB 기준 추정치</p>
         </div>
-        <div class="det-section">
-          <h4 class="label">영양 정보</h4>
-          <div class="card" id="det-nuts">
-            <!-- filled by JS -->
-          </div>
-        </div>
-        <p class="src-note">식품의약품안전처 영양성분 DB 기준</p>
       </section>
 
-      <!-- ── PAGE: CALENDAR ── -->
-      <section class="pg" id="pg-calendar">
-        <div class="pg-head">
+      <!-- CALENDAR -->
+      <section class="page" id="page-calendar">
+        <div class="page-top">
           <h2>급식 달력</h2>
-          <p class="muted">이번 주 급식을 한눈에</p>
+          <p class="sub-text">이번 주 급식을 한눈에</p>
         </div>
-        <div class="week-row" id="week-row"></div>
-        <div class="card cal-card" id="cal-card">
-          <h4 id="cal-day-title">오늘</h4>
+        <div class="week-strip" id="week-strip"></div>
+        <div class="section-card" id="cal-detail">
+          <h4 id="cal-title">오늘</h4>
           <ul id="cal-list"></ul>
         </div>
       </section>
 
-      <!-- ── PAGE: PHOTO ── -->
-      <section class="pg" id="pg-photo">
-        <div class="pg-head">
+      <!-- PHOTO -->
+      <section class="page" id="page-photo">
+        <div class="page-top">
           <h2>급식 사진</h2>
-          <p class="muted">영양사 선생님이 올려주신 사진</p>
+          <p class="sub-text">최근 급식 사진 기록</p>
         </div>
         <div id="feed-list" class="feed-list"></div>
-        <button class="fab" id="btn-fab">＋</button>
       </section>
 
-      <!-- ── PAGE: NUTRITION ── -->
-      <section class="pg" id="pg-nut">
-        <div class="nut-top">
+      <!-- NUTRITION -->
+      <section class="page" id="page-nutrition">
+        <div class="nut-hero">
           <h2>영양 분석</h2>
-          <p class="muted" id="nut-date"></p>
-          <div class="nut-bigs">
-            <div class="nut-big"><strong id="nut-kcal">0</strong><small>kcal</small><span>총 칼로리</span></div>
-            <div class="nut-big"><strong id="nut-cnt">0</strong><small>가지</small><span>메뉴 수</span></div>
+          <p class="sub-text" id="nut-date-text"></p>
+          <div class="nut-numbers">
+            <div class="nut-num-item"><strong id="nut-kcal">0</strong><small>kcal</small><span>총 열량</span></div>
+            <div class="nut-num-item"><strong id="nut-cnt">0</strong><small>가지</small><span>메뉴 수</span></div>
           </div>
         </div>
-        <div class="insight">
-          <span class="insight-icon">🍙</span>
-          <div>
+        <div class="insight-card">
+          <div class="insight-mascot">
+            <img src="assets/mascot.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" style="width:40px">
+            <span style="display:none;font-size:28px">🍱</span>
+          </div>
+          <div class="insight-body">
             <strong>오늘의 영양 코멘트</strong>
-            <p id="nut-comment">급식 정보를 등록하면 분석해드려요!</p>
+            <p id="nut-comment">급식 정보가 등록되면 분석해드려요!</p>
           </div>
         </div>
-        <div class="stats" id="nut-stats"></div>
-        <div class="card nut-bars-card">
-          <h4 class="label">영양소 비율</h4>
-          <div id="nut-bars"></div>
+        <div class="stat-grid" id="stat-grid"></div>
+        <div class="section-card">
+          <h4 class="section-label" style="padding:14px 16px 0">영양소 비율</h4>
+          <div id="nut-bars" style="padding:12px 16px 16px"></div>
         </div>
       </section>
 
-      <!-- ── PAGE: ALLERGY ── -->
-      <section class="pg" id="pg-allergy">
-        <div class="pg-head">
+      <!-- ALLERGY -->
+      <section class="page" id="page-allergy">
+        <div class="page-top">
           <h2>알레르기 · 성분</h2>
-          <p class="muted">오늘 급식의 알레르기 정보</p>
+          <p class="sub-text">오늘 급식의 알레르기 정보</p>
         </div>
         <div class="allergy-tags" id="allergy-tags"></div>
-        <div id="allergy-list"></div>
+        <div id="allergy-cards"></div>
       </section>
 
     </main>
 
-    <!-- bottom nav -->
-    <nav class="bnav" id="bnav">
-      <button class="nb on" data-pg="home"><span>🏠</span>홈</button>
-      <button class="nb" data-pg="calendar"><span>📅</span>달력</button>
-      <button class="nb" data-pg="photo"><span>📷</span>사진</button>
-      <button class="nb" data-pg="nut"><span>📊</span>영양</button>
-      <button class="nb" data-pg="allergy"><span>⚠️</span>성분</button>
+    <!-- FAB for photo page -->
+    <button class="fab" id="btn-fab" style="display:none">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav" id="bottom-nav">
+      <button class="nav-item active" data-page="home">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        <span>홈</span>
+      </button>
+      <button class="nav-item" data-page="calendar">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>달력</span>
+      </button>
+      <button class="nav-item" data-page="photo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="15" rx="2"/><circle cx="12" cy="12.5" r="3.5"/><path d="M5 5l2-2h10l2 2"/></svg>
+        <span>사진</span>
+      </button>
+      <button class="nav-item" data-page="nutrition">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        <span>영양</span>
+      </button>
+      <button class="nav-item" data-page="allergy">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>성분</span>
+      </button>
     </nav>
   </div>
 
-  <!-- toast -->
+  <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
-  <!-- upload modal -->
-  <div class="modal-bg" id="modal-upload">
-    <div class="modal">
-      <div class="modal-head">
+  <!-- UPLOAD MODAL -->
+  <div class="modal-overlay" id="upload-modal">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
         <h3>📸 급식 사진 올리기</h3>
-        <button class="modal-x" id="modal-x">✕</button>
+        <button class="modal-close" id="upload-close">✕</button>
       </div>
       <div class="modal-body">
-        <div class="upload-bubble-row">
-          <span class="big-emoji">🍙</span>
-          <div class="bubble">오늘 급식이 맛있었나요?<br>사진으로 기록해봐요! 📷</div>
-        </div>
-        <div class="drop-zone" id="drop-zone">
-          <span>＋</span>
+        <div class="upload-drop" id="upload-drop">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.6"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           <p>사진을 선택하세요</p>
           <small>JPG, PNG · 최대 10MB</small>
         </div>
-        <input type="file" id="file-in" accept="image/*" hidden>
-        <div id="preview-box" style="display:none"><img id="preview-img" alt="미리보기"></div>
-        <label class="field-label">한줄 메모</label>
-        <input type="text" class="field" id="memo-in" placeholder="오늘 급식 한마디...">
-        <button class="btn-g" id="btn-upload-submit">업로드하기</button>
+        <input type="file" id="upload-file" accept="image/*" hidden>
+        <div id="upload-preview" style="display:none">
+          <img id="upload-preview-img" alt="미리보기">
+        </div>
+        <label class="form-label">한줄 메모</label>
+        <input type="text" class="form-input" id="upload-memo" placeholder="오늘 급식 한마디...">
+        <button class="btn-primary" id="upload-submit">업로드하기</button>
       </div>
     </div>
   </div>
