@@ -434,66 +434,54 @@
     }
   }
 
-  // ═══ FEED ═══
-  function renderFeed() {
+  // ═══ PHOTO FEED ═══
+  async function renderFeed() {
     var list = $('feed-list');
-    list.innerHTML = '';
+    list.innerHTML = '<div class="empty-state"><p>사진을 불러오는 중...</p></div>';
+    
+    try {
+      const res = await fetch('/api/photos?date=' + todayStr());
+      if (res.ok) {
+        const photos = await res.json();
+        if (photos.length === 0) {
+          list.innerHTML = '<div class="empty-state"><p>📸 아직 올라온 사진이 없어요</p></div>';
+          var tz = $('photo-teaser');
+          if(tz) tz.style.display = 'none';
+          return;
+        }
+        
+        list.innerHTML = '';
+        var teaserContainer = $('photo-teaser');
+        if(teaserContainer) teaserContainer.style.display = '';
+        var teaserBody = teaserContainer ? teaserContainer.querySelector('.teaser-empty') : null;
+        if(teaserBody) teaserBody.innerHTML = '';
+        
+        for (var i = 0; i < photos.length; i++) {
+          var p = photos[i];
+          
+          if (i === 0 && teaserBody) {
+            var teaserImg = document.createElement('img');
+            teaserImg.src = p.img;
+            teaserImg.style.width = '100%';
+            teaserImg.style.borderRadius = 'var(--radius-md)';
+            teaserImg.style.marginTop = '12px';
+            teaserBody.appendChild(teaserImg);
+          }
 
-    var entries = [];
-    var now = new Date();
-    for (var i = 0; i < 7; i++) {
-      var dd = new Date(now);
-      dd.setDate(now.getDate() - i);
-      var ds = dd.getFullYear() + '-' + String(dd.getMonth() + 1).padStart(2, '0') + '-' + String(dd.getDate()).padStart(2, '0');
-      var data = loadMeals(ds);
-      if (data && data.lunch && data.lunch.length > 0) {
-        entries.push({ date: ds, menus: data.lunch, isToday: i === 0 });
+          var card = document.createElement('div');
+          card.className = 'feed-card';
+          var dt = new Date(p.ts || Date.now());
+          var timeStr = dt.getHours() + ':' + String(dt.getMinutes()).padStart(2, '0');
+          
+          card.innerHTML =
+            '<div class="feed-header"><div class="feed-avatar"></div>' +
+            '<div class="feed-meta"><strong>' + p.user + '</strong><span>' + timeStr + '</span></div></div>' +
+            '<img src="' + p.img + '" class="feed-img" alt="">';
+          list.appendChild(card);
+        }
       }
-    }
-
-    if (entries.length === 0) {
-      list.innerHTML = '<div class="empty-state"><div class="empty-mascot"><span style="font-size:48px">📸</span></div>' +
-        '<p>급식 사진이 없어요</p><small>관리자가 급식을 등록하면 나타나요</small></div>';
-      return;
-    }
-
-    for (var j = 0; j < entries.length; j++) {
-      var e = entries[j];
-      var menuStr = '';
-      for (var k = 0; k < e.menus.length; k++) {
-        if (k > 0) menuStr += ' · ';
-        menuStr += e.menus[k].emoji + ' ' + e.menus[k].name;
-      }
-      var label = e.isToday ? '오늘' : e.date.slice(5);
-
-      var card = document.createElement('div');
-      card.className = 'feed-card';
-      card.innerHTML =
-        '<div class="feed-photo">' +
-          '<span class="feed-date-tag">' + label + ' 점심</span>' +
-          '<div class="feed-photo-icon">' + (e.isToday ? '📷' : '📸') + '</div>' +
-          '<small>' + (e.isToday ? '아직 업로드 전이에요' : '실제 사진이 들어갈 자리') + '</small>' +
-        '</div>' +
-        '<div class="feed-body">' +
-          '<p class="feed-menus">' + menuStr + '</p>' +
-          '<div class="feed-footer">' +
-            '<div class="feed-author"><div class="feed-avatar"><img src="assets/mascot.png" alt="" onerror="this.parentElement.textContent=\'🍱\'"></div><span class="feed-author-name">영양사 선생님</span></div>' +
-            '<button class="feed-like" data-n="0">♡ 맛있겠다</button>' +
-          '</div>' +
-        '</div>';
-      list.appendChild(card);
-    }
-
-    // Like handlers
-    var likeBtns = $$('.feed-like');
-    for (var li = 0; li < likeBtns.length; li++) {
-      likeBtns[li].addEventListener('click', function () {
-        var n = parseInt(this.getAttribute('data-n')) + 1;
-        this.setAttribute('data-n', n);
-        this.textContent = '❤️ ' + n;
-        this.style.color = 'var(--red)';
-        toast('❤️ 좋아요!');
-      });
+    } catch(e) {
+      list.innerHTML = '<div class="empty-state"><p>❌ 사진을 불러오지 못했습니다</p></div>';
     }
   }
 
@@ -647,9 +635,51 @@
       reader.readAsDataURL(file);
     });
 
-    $('upload-submit').addEventListener('click', function () {
-      closeUpload();
-      toast('✅ 사진이 업로드되었습니다!');
+    $('upload-submit').addEventListener('click', async function () {
+      var btn = this;
+      if (!previewImg.src) return;
+      
+      var origText = btn.textContent;
+      btn.textContent = '사진 최적화 및 업로드 중...';
+      
+      try {
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        var img = new Image();
+        img.src = previewImg.src;
+        
+        await new Promise(r => img.onload = r);
+        
+        var maxW = 800;
+        var scale = maxW / img.width;
+        if (scale > 1) scale = 1;
+        canvas.width = Math.floor(img.width * scale);
+        canvas.height = Math.floor(img.height * scale);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        var base64 = canvas.toDataURL('image/jpeg', 0.8);
+        
+        const res = await fetch('/api/photos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            date: todayStr(), 
+            photoBase64: base64, 
+            user: currentUser ? currentUser.name : '익명'
+          })
+        });
+        
+        if (res.ok) {
+          toast('✅ 사진이 안전하게 업로드되었습니다!');
+          closeUpload();
+          renderFeed();
+        } else {
+          toast('❌ 업로드 실패');
+        }
+      } catch(e) {
+        toast('❌ 서버 연결 오류');
+      }
+      btn.textContent = origText;
     });
 
     function closeUpload() {

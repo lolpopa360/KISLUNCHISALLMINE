@@ -47,6 +47,20 @@
   </header>
 
   <main class="admin-main">
+    <!-- BULK PARSER -->
+    <section class="admin-card" style="position:relative; overflow:hidden;">
+      <div style="position:absolute; top:0; left:0; width:4px; height:100%; background:var(--blue);"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h3 style="margin:0;">🤖 식단표 자동 분석기</h3>
+      </div>
+      <p style="font-size:13px; color:var(--gray-dark); margin-bottom:12px; line-height:1.4;">
+        식단표 내용을 복사/붙여넣기 하세요.<br>
+        (형식 예: <span style="font-family:monospace; background:white; padding:2px 4px; border-radius:4px;">2026.04.10 [중식] 현미밥, 미역국</span>)
+      </p>
+      <textarea id="bulk-text" class="form-input" rows="4" placeholder="텍스트 붙여넣기..." style="resize:vertical"></textarea>
+      <button class="btn-primary btn-sm" id="btn-parse-bulk" style="margin-top:12px; width:100%;">자동 분류하기</button>
+    </section>
+
     <!-- DATE -->
     <section class="admin-card">
       <h3>📅 날짜 선택</h3>
@@ -197,6 +211,41 @@
     pickDate.addEventListener('change', function(){ loadDate(this.value); });
     document.getElementById('add-lunch').addEventListener('click', function(){ addRow('lunch'); });
     document.getElementById('add-dinner').addEventListener('click', function(){ addRow('dinner'); });
+
+    document.getElementById('btn-parse-bulk').addEventListener('click', function(){
+      var txt = document.getElementById('bulk-text').value;
+      if (!txt.trim()) { toast('텍스트를 입력해주세요'); return; }
+
+      // Extract Date (YYYY.MM.DD or YYYY-MM-DD)
+      var dateMatch = txt.match(/20\d{2}[-.]\d{1,2}[-.]\d{1,2}/);
+      if (dateMatch) {
+         var ds = dateMatch[0].replace(/\./g, '-');
+         var parts = ds.split('-');
+         if(parts.length===3) {
+            ds = parts[0] + '-' + parts[1].padStart(2,'0') + '-' + parts[2].padStart(2,'0');
+            pickDate.value = ds;
+            loadDate(ds); // reload day
+         }
+      }
+
+      // Extract lunch and dinner items
+      var lMatch = txt.match(/\[중식\](.*?)(?=\[석식\]|$)/s);
+      var dMatch = txt.match(/\[석식\](.*?)(?=\[중식\]|$)/s);
+      
+      if (lMatch) {
+         var names = lMatch[1].split(/[,]+|\s{2,}/).map(n=>n.replace(/\(.*?\)/g, '').trim()).filter(n=>n);
+         names.forEach(n => addRowWithData('lunch', { emoji: '🍲', name: n, kcal: '', allergy: '' }));
+         document.getElementById('lunch-empty').style.display = 'none';
+      }
+      
+      if (dMatch) {
+         var names = dMatch[1].split(/[,]+|\s{2,}/).map(n=>n.replace(/\(.*?\)/g, '').trim()).filter(n=>n);
+         names.forEach(n => addRowWithData('dinner', { emoji: '🍲', name: n, kcal: '', allergy: '' }));
+         document.getElementById('dinner-empty').style.display = 'none';
+      }
+
+      toast('🤖 파싱 완료! 내용을 확인하고 저장하세요.');
+    });
 
     document.getElementById('btn-save').addEventListener('click', async function(){
       var dateVal = pickDate.value;
