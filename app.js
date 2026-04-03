@@ -682,10 +682,11 @@
           closeUpload();
           renderFeed();
         } else {
-          toast('❌ 업로드 실패');
+          var errText = await res.text();
+          toast('❌ 업로드 실패: ' + res.status + ' ' + errText.substring(0, 80));
         }
       } catch(e) {
-        toast('❌ 서버 연결 오류');
+        toast('❌ 서버 연결 오류: ' + e.message);
       }
       btn.textContent = origText;
     });
