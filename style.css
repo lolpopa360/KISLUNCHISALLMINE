@@ -1068,6 +1068,90 @@ input, select { font-family: inherit; }
   .fi-allergy { width: 100%; }
 }
 
+/* ═══ PROFILE SETTINGS ═══ */
+.profile-card {
+  margin: 16px 20px;
+  background: var(--card);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-card);
+}
+.profile-avatar {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: var(--green-soft);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px;
+}
+.profile-info h3 { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.profile-role { font-size: 13px; color: var(--green); font-weight: 700; background: var(--green-soft); padding: 4px 10px; border-radius: 999px; }
+
+.allergy-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 10px;
+  padding: 16px;
+}
+.allergy-toggle {
+  background: #f0f2f0;
+  border: 1.5px solid transparent;
+  color: var(--text-2);
+  border-radius: 999px;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  user-select: none;
+}
+.allergy-toggle.active {
+  background: #ffebee;
+  border-color: var(--red);
+  color: var(--red);
+}
+.allergy-toggle:active { transform: scale(.94); }
+
+.btn-outline {
+  width: calc(100% - 40px);
+  margin: 0 auto;
+  display: block;
+  padding: 16px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  background: transparent;
+  transition: all .2s;
+}
+.btn-outline:active { transform: scale(.96); }
+
+/* WARNING HIGHLIGHTS */
+.menu-card.danger {
+  border: 2px solid var(--red);
+  box-shadow: 0 4px 16px rgba(244, 67, 54, 0.2);
+  background: var(--card); /* To ensure base background is intact but outer border glows */
+}
+.danger-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: white;
+  background: var(--red);
+  padding: 6px 12px;
+  border-radius: 999px;
+  display: inline-block;
+  margin-top: 8px;
+  animation: pulseDanger 1.5s infinite;
+}
+@keyframes pulseDanger {
+  0% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(244, 67, 54, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
+}
+
 /* ═══════════════════════════════════
    DESKTOP RESPONSIVE
    ═══════════════════════════════════ */

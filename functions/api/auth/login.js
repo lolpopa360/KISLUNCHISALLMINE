@@ -31,7 +31,8 @@ export async function onRequestPost({ request, env }) {
     return new Response(JSON.stringify({
       id: found.id,
       name: found.name,
-      role: found.role
+      role: found.role,
+      allergies: found.allergies || []
     }), { headers: { 'Content-Type': 'application/json' } });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });

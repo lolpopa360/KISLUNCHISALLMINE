@@ -211,6 +211,8 @@
 
     $('goto-photo').addEventListener('click', function () { goPage('photo'); });
     $('btn-bell').addEventListener('click', function () { toast('🔔 새로운 알림이 없습니다'); });
+    var bp = $('btn-profile');
+    if(bp) bp.addEventListener('click', function () { goPage('profile'); renderProfile(); });
   }
 
   // ═══ HOME ═══
@@ -248,7 +250,18 @@
     for (var j = 0; j < menus.length; j++) {
       var m = menus[j];
       var card = document.createElement('div');
-      card.className = 'menu-card';
+      var isDanger = false;
+      var dangerMatched = [];
+      if (m.allergy && currentUser && currentUser.allergies) {
+        var mAllergies = m.allergy.split('·').map(function(a){return a.trim()});
+        for (var k = 0; k < mAllergies.length; k++) {
+          if (currentUser.allergies.includes(mAllergies[k])) {
+            isDanger = true;
+            dangerMatched.push(mAllergies[k]);
+          }
+        }
+      }
+      card.className = 'menu-card' + (isDanger ? ' danger' : '');
       card.innerHTML =
         '<div class="mc-visual">' +
           (m.allergy ? '<div class="mc-allergy-badge"></div>' : '') +
@@ -257,6 +270,7 @@
         '<div class="mc-info">' +
           '<div class="mc-name">' + m.name + '</div>' +
           '<div class="mc-sub">' + m.kcal + ' kcal' + (m.allergy ? ' · ' + m.allergy + ' ⚠' : '') + '</div>' +
+          (isDanger ? '<div class="danger-badge">🚨 ' + dangerMatched.join(', ') + ' 주의!</div>' : '') +
         '</div>';
       (function (menu) {
         card.addEventListener('click', function () { openDetail(menu); });
@@ -632,15 +646,91 @@
     for (var c = 0; c < menus.length; c++) {
       var m = menus[c];
       var item = document.createElement('div');
+      var isDanger = false;
+      if (m.allergy && currentUser && currentUser.allergies) {
+        var mAllergies = m.allergy.split('·').map(function(a){return a.trim()});
+        for (var k = 0; k < mAllergies.length; k++) {
+          if (currentUser.allergies.includes(mAllergies[k])) {
+            isDanger = true; break;
+          }
+        }
+      }
       item.className = 'allergy-item';
+      if(isDanger) { item.style.border = '1.5px solid var(--red)'; item.style.background = '#ffebee'; }
       item.innerHTML =
         '<span class="allergy-emoji">' + m.emoji + '</span>' +
         '<div class="allergy-info"><div class="allergy-name">' + m.name + '</div>' +
         '<div class="allergy-detail">' + m.kcal + ' kcal</div></div>' +
-        '<span class="allergy-badge ' + (m.allergy ? 'ab-warn' : 'ab-safe') + '">' +
-        (m.allergy ? '⚠ ' + m.allergy : '✓ 안전') + '</span>';
+        '<span class="allergy-badge ' + (isDanger ? 'ab-warn' : (m.allergy ? 'ab-warn' : 'ab-safe')) + '" style="' + (isDanger ? 'background:var(--red);color:#fff;' : '') + '">' +
+        (isDanger ? '🚨 섭취 위험' : (m.allergy ? '⚠ ' + m.allergy : '✓ 안전')) + '</span>';
       cards.appendChild(item);
     }
+  }
+
+  // ═══ PROFILE ═══
+  const ALLERGY_LIST = ['난류', '우유', '메밀', '땅콩', '대두', '밀', '고등어', '게', '새우', '돼지고기', '복숭아', '토마토', '아황산류', '호두', '닭고기', '쇠고기', '오징어', '조개류', '잣'];
+
+  function renderProfile() {
+    var pName = $('profile-name');
+    var pRole = $('profile-role');
+    var pIni = $('profile-initial');
+    if (pName) pName.textContent = currentUser ? currentUser.name : 'Unknown';
+    if (pRole) pRole.textContent = currentUser ? (currentUser.role === 'admin' ? '관리자' : '학생') : '';
+    if (pIni) pIni.textContent = currentUser ? currentUser.name.charAt(0) : '👤';
+
+    var grid = $('allergy-toggle-grid');
+    if (grid) {
+      grid.innerHTML = '';
+      var myAllergies = (currentUser && currentUser.allergies) || [];
+
+      for (var i = 0; i < ALLERGY_LIST.length; i++) {
+        var al = ALLERGY_LIST[i];
+        var btn = document.createElement('div');
+        btn.className = 'allergy-toggle' + (myAllergies.includes(al) ? ' active' : '');
+        btn.textContent = al;
+        (function(button) {
+            button.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        })(btn);
+        grid.appendChild(btn);
+      }
+    }
+  }
+
+  var btnSaveProfile = $('btn-save-profile');
+  if (btnSaveProfile) {
+      btnSaveProfile.addEventListener('click', async function() {
+          var originalText = this.textContent;
+          this.textContent = '저장 중...';
+          
+          var selected = [];
+          var toggles = $$('.allergy-toggle.active');
+          for(var i=0; i<toggles.length; i++) {
+              selected.push(toggles[i].textContent);
+          }
+
+          try {
+              const res = await fetch('/api/profile', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id: currentUser.id, allergies: selected })
+              });
+              if(res.ok) {
+                  currentUser.allergies = selected;
+                  setDB('session', currentUser);
+                  toast('✅ 맞춤 알레르기 설정 저장 완료');
+                  renderHome();
+                  renderNutrition();
+                  renderAllergy();
+              } else {
+                  toast('❌ 저장 실패');
+              }
+          } catch(e) {
+              toast('❌ 네트워크 연결 오류');
+          }
+          this.textContent = originalText;
+      });
   }
 
   // ═══ UPLOAD ═══
