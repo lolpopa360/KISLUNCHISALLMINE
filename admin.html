@@ -47,6 +47,41 @@
   </header>
 
   <main class="admin-main">
+    <!-- EXCEL BULK IMPORT -->
+    <section class="admin-card" id="excel-section" style="position:relative; overflow:hidden;">
+      <div style="position:absolute; top:0; left:0; width:4px; height:100%; background:var(--green);"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="margin:0;">📊 엑셀 한 달 일괄 업로드</h3>
+        <span class="excel-badge">NEW</span>
+      </div>
+
+      <!-- 급식 유형 선택 -->
+      <p style="font-size:13px; font-weight:700; color:var(--gray-dark); margin-bottom:8px;">① 업로드할 급식 유형 선택</p>
+      <div class="excel-type-selector">
+        <button class="meal-type-btn active" id="excel-type-lunch" data-type="lunch">🌞 급식 (중식)</button>
+        <button class="meal-type-btn" id="excel-type-dinner" data-type="dinner">🌙 석식 (저녁)</button>
+      </div>
+
+      <!-- 파일 드롭존 -->
+      <p style="font-size:13px; font-weight:700; color:var(--gray-dark); margin:16px 0 8px;">② 엑셀 파일 업로드</p>
+      <div class="excel-drop-zone" id="excel-drop-zone">
+        <div class="excel-drop-icon">📂</div>
+        <div class="excel-drop-text">클릭하거나 파일을 여기에 드래그</div>
+        <div class="excel-drop-hint">.xlsx / .xls 파일 지원</div>
+        <input type="file" id="excel-file-input" accept=".xlsx,.xls" style="display:none;">
+      </div>
+
+      <!-- 미리보기 -->
+      <div id="excel-preview-wrap" style="display:none; margin-top:16px;">
+        <p style="font-size:13px; font-weight:700; color:var(--gray-dark); margin-bottom:8px;">③ 파싱 미리보기 — 확인 후 저장</p>
+        <div id="excel-preview-table" class="excel-preview-table"></div>
+        <div class="excel-import-actions">
+          <button class="btn-outline-sm" id="btn-excel-cancel">✕ 취소</button>
+          <button class="btn-primary" id="btn-excel-save" style="background:var(--green);">💾 전체 저장</button>
+        </div>
+      </div>
+    </section>
+
     <!-- BULK PARSER -->
     <section class="admin-card" style="position:relative; overflow:hidden;">
       <div style="position:absolute; top:0; left:0; width:4px; height:100%; background:var(--blue);"></div>
@@ -109,6 +144,20 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- EXCEL CONFLICT MODAL -->
+<div class="modal-backdrop" id="excel-conflict-modal" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-icon">⚠️</div>
+    <h3 class="modal-title">기존 데이터 감지됨</h3>
+    <p class="modal-desc" id="excel-conflict-desc">이미 저장된 날짜가 <strong id="conflict-count">0</strong>개 있습니다.<br>덮어쓰고 계속 진행하시겠습니까?</p>
+    <div class="modal-actions">
+      <button class="btn-outline-sm" id="btn-conflict-cancel">취소하기</button>
+      <button class="btn-primary" id="btn-conflict-proceed" style="background:var(--orange);">무시하고 진행</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script>
 (function(){
   'use strict';
@@ -289,6 +338,282 @@
         toast('❌ 삭제 실패');
       }
     });
+
+    // ═══ EXCEL BULK IMPORT ═══
+    initExcelImport();
+  }
+
+  // ── 알레르기 번호 → 이름 매핑 ──
+  var allergyMap = {
+    '1':'계란','2':'우유','3':'메밀','4':'땅콩','5':'대두',
+    '6':'밀','7':'고등어','8':'게','9':'새우','10':'돼지고기',
+    '11':'복숭아','12':'토마토','13':'아황산류','14':'호두','15':'닭고기',
+    '16':'쇠고기','17':'오징어','18':'조개류','19':'잣'
+  };
+
+  // ── 한 셀의 텍스트 → 메뉴 배열 변환 ──
+  function parseCellToMenus(cellText) {
+    if (!cellText || typeof cellText !== 'string') return [];
+    var cleaned = cellText.trim();
+    // 공고 문구 or 특수 문자만 있는 경우 스킵
+    if (cleaned === '—' || cleaned === '-' || cleaned.includes('고사') || cleaned.includes('휴업') || cleaned.includes('재량')) return null; // null = 비어있는 날
+
+    var lines = cleaned.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l; });
+    var menus = [];
+    var current = null;
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      // 순수 알레르기 번호 줄 패턴: (숫자.숫자...) — 직전 메뉴에 붙임
+      var isAllergyOnly = /^\([\d\.\s]+\)$/.test(line);
+      if (isAllergyOnly && current) {
+        var nums = line.replace(/[()]/g,'').split('.').map(function(n){ return n.trim(); }).filter(Boolean);
+        var names = nums.map(function(n){ return allergyMap[n] || ''; }).filter(Boolean);
+        current.allergy = names.join('·');
+        continue;
+      }
+      // 메뉴명 + 인라인 알레르기 패턴: "메뉴명 (1.5.6)"
+      var inlineMatch = line.match(/^(.*?)\s*\(([\d\.\s]+)\)$/);
+      if (inlineMatch) {
+        var name = inlineMatch[1].replace(/\*\S+/g, '').trim(); // *브라운S 같은 부가 설명 제거
+        var nums = inlineMatch[2].split('.').map(function(n){ return n.trim(); }).filter(Boolean);
+        var allergyNames = nums.map(function(n){ return allergyMap[n] || ''; }).filter(Boolean);
+        if (name) {
+          current = { emoji: pickEmoji(name), name: name, kcal: 0, allergy: allergyNames.join('·') };
+          menus.push(current);
+        }
+      } else {
+        // 알레르기 없는 순수 메뉴명
+        var name = line.replace(/\*\S+/g, '').trim();
+        if (name) {
+          current = { emoji: pickEmoji(name), name: name, kcal: 0, allergy: '' };
+          menus.push(current);
+        }
+      }
+    }
+    return menus;
+  }
+
+  // ── 메뉴명 키워드로 이모지 추측 ──
+  var emojiRules = [
+    [/밥|덮밥|볶음밥|비빔밥/, '🍚'],
+    [/국|찌개|탕|수프|죽/, '🍲'],
+    [/면|소바|스파게티|파스타|라면|짜장|짬뽕|칼국수/, '🍜'],
+    [/치킨|닭/, '🍗'],
+    [/돼지|삼겹|제육|순대/, '🥩'],
+    [/소고기|쇠고기|불고기|차돌/, '🥩'],
+    [/생선|고등어|연어|참치|새우|오징어|해물|보쌈/, '🐟'],
+    [/샐러드|채소|나물|무침|무침/, '🥗'],
+    [/김치|깍두기/, '🥬'],
+    [/빵|토스트|샌드위치|크로켓/, '🍞'],
+    [/피자/, '🍕'],
+    [/과일|사과|귤|바나나/, '🍎'],
+    [/케이크|디저트|초코/, '🍰'],
+    [/만두|튀김|떡/, '🥟'],
+    [/카레|스튜/, '🍛'],
+    [/우유|요거트|요구르트/, '🥛'],
+    [/주스|음료|쥬스/, '🧃'],
+  ];
+  function pickEmoji(name) {
+    for (var i = 0; i < emojiRules.length; i++) {
+      if (emojiRules[i][0].test(name)) return emojiRules[i][1];
+    }
+    return '🍽';
+  }
+
+  // ── 주차 셀에서 날짜 범위 파싱 (예: "1주\n(4/1~4/3)") ──
+  function parseWeekRange(cellText) {
+    if (!cellText) return null;
+    var match = String(cellText).match(/(\d+)\/(\d+)~(\d+)\/(\d+)/);
+    if (!match) return null;
+    return {
+      startMonth: parseInt(match[1]), startDay: parseInt(match[2]),
+      endMonth: parseInt(match[3]), endDay: parseInt(match[4])
+    };
+  }
+
+  // ── 주차 범위 + 요일 인덱스(0=월)로 실제 날짜 문자열 계산 ──
+  function computeDate(year, weekRange, dayIdx) {
+    // dayIdx: 0=월, 1=화, ..., 4=금
+    var startDate = new Date(year, weekRange.startMonth - 1, weekRange.startDay);
+    var result = new Date(startDate);
+    result.setDate(startDate.getDate() + dayIdx);
+    // 범위 초과 체크
+    var endDate = new Date(year, weekRange.endMonth - 1, weekRange.endDay);
+    if (result > endDate) return null;
+    // 주말 체크 (토/일이면 skip — 실제 학교 달력 기준)
+    var dow = result.getDay();
+    if (dow === 0 || dow === 6) return null;
+    return result.getFullYear() + '-' +
+      String(result.getMonth()+1).padStart(2,'0') + '-' +
+      String(result.getDate()).padStart(2,'0');
+  }
+
+  var excelParsedData = {}; // 파싱된 날짜별 결과물
+  var excelMealType = 'lunch'; // 현재 선택된 유형
+
+  function initExcelImport() {
+    // 유형 선택 버튼
+    var btnLunch = document.getElementById('excel-type-lunch');
+    var btnDinner = document.getElementById('excel-type-dinner');
+    if (btnLunch) btnLunch.addEventListener('click', function() {
+      excelMealType = 'lunch';
+      btnLunch.classList.add('active');
+      btnDinner.classList.remove('active');
+    });
+    if (btnDinner) btnDinner.addEventListener('click', function() {
+      excelMealType = 'dinner';
+      btnDinner.classList.add('active');
+      btnLunch.classList.remove('active');
+    });
+
+    // 드롭존 클릭 → 파일 선택
+    var dropZone = document.getElementById('excel-drop-zone');
+    var fileInput = document.getElementById('excel-file-input');
+    if (dropZone) {
+      dropZone.addEventListener('click', function() { fileInput.click(); });
+      dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault(); dropZone.classList.add('drag-over');
+      });
+      dropZone.addEventListener('dragleave', function() { dropZone.classList.remove('drag-over'); });
+      dropZone.addEventListener('drop', function(e) {
+        e.preventDefault(); dropZone.classList.remove('drag-over');
+        if (e.dataTransfer.files[0]) handleExcelFile(e.dataTransfer.files[0]);
+      });
+    }
+    if (fileInput) fileInput.addEventListener('change', function() {
+      if (this.files[0]) handleExcelFile(this.files[0]);
+    });
+
+    // 취소 버튼
+    var btnCancel = document.getElementById('btn-excel-cancel');
+    if (btnCancel) btnCancel.addEventListener('click', function() {
+      document.getElementById('excel-preview-wrap').style.display = 'none';
+      excelParsedData = {};
+      if (fileInput) fileInput.value = '';
+    });
+
+    // 저장 버튼
+    var btnSave = document.getElementById('btn-excel-save');
+    if (btnSave) btnSave.addEventListener('click', function() {
+      var conflictDates = Object.keys(excelParsedData).filter(function(d) { return cachedMeals[d]; });
+      if (conflictDates.length > 0) {
+        document.getElementById('conflict-count').textContent = conflictDates.length;
+        document.getElementById('excel-conflict-modal').style.display = 'flex';
+      } else {
+        executeExcelSave();
+      }
+    });
+
+    // 충돌 모달 버튼
+    var btnProceed = document.getElementById('btn-conflict-proceed');
+    var btnConflictCancel = document.getElementById('btn-conflict-cancel');
+    if (btnProceed) btnProceed.addEventListener('click', function() {
+      document.getElementById('excel-conflict-modal').style.display = 'none';
+      executeExcelSave();
+    });
+    if (btnConflictCancel) btnConflictCancel.addEventListener('click', function() {
+      document.getElementById('excel-conflict-modal').style.display = 'none';
+    });
+  }
+
+  function handleExcelFile(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var data = new Uint8Array(e.target.result);
+        var workbook = XLSX.read(data, { type: 'array' });
+        var sheet = workbook.Sheets[workbook.SheetNames[0]];
+        var rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+
+        // 파일명 또는 첫 행에서 연도 파악
+        var year = new Date().getFullYear();
+        var firstCell = rows[0] ? String(rows[0][0] || '') : '';
+        var yearMatch = firstCell.match(/(\d{4})/);
+        if (yearMatch) year = parseInt(yearMatch[1]);
+
+        excelParsedData = {};
+
+        // 데이터 행 탐색 (헤더 이후 행부터)
+        for (var r = 0; r < rows.length; r++) {
+          var row = rows[r];
+          if (!row || !row[0]) continue;
+          var weekRange = parseWeekRange(String(row[0]));
+          if (!weekRange) continue;
+
+          // Col 1~5 = 월~금
+          for (var c = 1; c <= 5; c++) {
+            var cellText = row[c] ? String(row[c]) : null;
+            var menus = parseCellToMenus(cellText);
+            if (menus === null) continue; // 비어있는 날 (고사, 휴업 등)
+            var dateStr = computeDate(year, weekRange, c - 1);
+            if (!dateStr) continue;
+            excelParsedData[dateStr] = menus;
+          }
+        }
+
+        if (Object.keys(excelParsedData).length === 0) {
+          toast('❌ 파싱 가능한 데이터가 없습니다. 엑셀 형식을 확인해주세요.');
+          return;
+        }
+
+        renderExcelPreview();
+        document.getElementById('excel-preview-wrap').style.display = '';
+        toast('✅ ' + Object.keys(excelParsedData).length + '일치 파싱 완료! 미리보기를 확인하세요.');
+      } catch(err) {
+        console.error(err);
+        toast('❌ 엑셀 파일 파싱 실패: ' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function renderExcelPreview() {
+    var container = document.getElementById('excel-preview-table');
+    var dates = Object.keys(excelParsedData).sort();
+    var typeLabel = excelMealType === 'lunch' ? '🌞 급식(중식)' : '🌙 석식(저녁)';
+    var html = '<div class="ep-type-badge">' + typeLabel + ' 데이터로 저장됩니다</div>';
+    html += '<div class="ep-table">';
+    dates.forEach(function(d) {
+      var menus = excelParsedData[d];
+      var hasConflict = !!cachedMeals[d];
+      html += '<div class="ep-row' + (hasConflict ? ' ep-conflict' : '') + '">';
+      html += '<div class="ep-date">' + d + (hasConflict ? ' <span class="ep-dup">기존 있음</span>' : '') + '</div>';
+      html += '<div class="ep-menus">';
+      if (menus.length === 0) {
+        html += '<span class="ep-empty">메뉴 없음 (미배식일)</span>';
+      } else {
+        menus.forEach(function(m) {
+          html += '<span class="ep-menu-chip">' + m.emoji + ' ' + m.name + '</span>';
+        });
+      }
+      html += '</div></div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  async function executeExcelSave() {
+    var dates = Object.keys(excelParsedData);
+    dates.forEach(function(d) {
+      var menus = excelParsedData[d];
+      if (!cachedMeals[d]) cachedMeals[d] = { lunch: [], dinner: [] };
+      cachedMeals[d][excelMealType] = menus;
+    });
+
+    var btn = document.getElementById('btn-excel-save');
+    if (btn) btn.textContent = '저장 중...';
+    var ok = await saveMealsToCloud();
+    if (btn) btn.textContent = '💾 전체 저장';
+
+    if (ok) {
+      document.getElementById('excel-preview-wrap').style.display = 'none';
+      excelParsedData = {};
+      renderSaved();
+      toast('✅ ' + dates.length + '일치 식단 저장 완료!');
+    } else {
+      toast('❌ 저장 실패. 다시 시도해주세요.');
+    }
   }
 
   function addRow(type) {

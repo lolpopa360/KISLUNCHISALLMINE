@@ -1219,3 +1219,81 @@ input, select { font-family: inherit; }
   .section-card, .detail-body, #cal-detail, .feed-list, .stat-grid, .insight-card, #allergy-cards { max-width: 900px; }
   .kcal-banner { max-width: 900px; }
 }
+
+/* ═══ EXCEL BULK IMPORT ═══ */
+.excel-badge {
+  background: var(--green); color: #fff; font-size: 11px; font-weight: 800;
+  padding: 3px 8px; border-radius: 20px; letter-spacing: 0.5px;
+}
+
+.excel-type-selector { display: flex; gap: 10px; }
+.meal-type-btn {
+  flex: 1; padding: 12px; border-radius: var(--r-md); font-size: 14px; font-weight: 700;
+  border: 2px solid var(--line); background: var(--bg); color: var(--text-2);
+  cursor: pointer; transition: all 0.2s ease;
+}
+.meal-type-btn.active {
+  border-color: var(--green); background: var(--green-soft); color: var(--green);
+}
+.meal-type-btn:hover:not(.active) { border-color: var(--text-3); }
+
+.excel-drop-zone {
+  border: 2px dashed var(--line); border-radius: var(--r-lg);
+  padding: 32px 20px; text-align: center; cursor: pointer;
+  background: var(--bg); transition: all 0.2s ease;
+}
+.excel-drop-zone:hover, .excel-drop-zone.drag-over {
+  border-color: var(--green); background: var(--green-soft);
+}
+.excel-drop-icon { font-size: 36px; margin-bottom: 8px; }
+.excel-drop-text { font-size: 15px; font-weight: 700; color: var(--text-2); }
+.excel-drop-hint { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+
+.excel-preview-table { margin-bottom: 16px; }
+.ep-type-badge {
+  display: inline-block; background: var(--green-soft); color: var(--green);
+  font-size: 13px; font-weight: 800; padding: 6px 14px; border-radius: 20px;
+  margin-bottom: 12px;
+}
+.ep-table { display: flex; flex-direction: column; gap: 8px; max-height: 360px; overflow-y: auto; }
+.ep-row {
+  display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px;
+  background: var(--bg); border-radius: var(--r-md); border: 1px solid var(--line);
+}
+.ep-row.ep-conflict { border-color: var(--orange); background: #fff8f0; }
+.ep-date { font-size: 13px; font-weight: 800; color: var(--text); min-width: 100px; }
+.ep-dup { 
+  display: inline-block; background: var(--orange); color: #fff; 
+  font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; margin-left: 4px;
+}
+.ep-menus { display: flex; flex-wrap: wrap; gap: 6px; }
+.ep-menu-chip {
+  background: var(--card); border: 1px solid var(--line); border-radius: 20px;
+  font-size: 13px; padding: 3px 10px; color: var(--text-2);
+}
+.ep-empty { font-size: 13px; color: var(--text-3); font-style: italic; }
+
+.excel-import-actions {
+  display: flex; gap: 10px; justify-content: flex-end; 
+  border-top: 1px solid var(--line); padding-top: 16px;
+}
+
+/* ═══ CONFLICT MODAL ═══ */
+.modal-backdrop {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  z-index: 9999; display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-box {
+  background: var(--card); border-radius: var(--r-xl); padding: 32px 28px;
+  max-width: 380px; width: 100%; text-align: center;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+  animation: modalIn 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+@keyframes modalIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal-icon { font-size: 48px; margin-bottom: 12px; }
+.modal-title { font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 10px; }
+.modal-desc { font-size: 14px; color: var(--text-2); line-height: 1.6; margin-bottom: 24px; }
+.modal-actions { display: flex; gap: 12px; }
+.modal-actions button { flex: 1; padding: 14px; border-radius: var(--r-md); font-size: 15px; font-weight: 700; cursor: pointer; }
