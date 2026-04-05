@@ -177,16 +177,51 @@
 
       <!-- CALENDAR -->
       <section class="page" id="page-calendar">
-        <div class="page-top">
-          <h2>급식 달력</h2>
-          <p class="sub-text">이번 주 급식을 한눈에</p>
+        <div class="page-top" style="display:flex; justify-content:space-between; align-items:flex-end;">
+          <div>
+            <h2>급식 달력</h2>
+            <p class="sub-text" style="margin-top:4px;">한 달의 식단을 한눈에</p>
+          </div>
+          <div class="cal-month-nav">
+            <button id="cal-prev-btn">‹</button>
+            <strong id="cal-month-title">--</strong>
+            <button id="cal-next-btn">›</button>
+          </div>
         </div>
-        <div class="week-strip" id="week-strip"></div>
-        <div class="section-card" id="cal-detail">
-          <h4 id="cal-title">오늘</h4>
-          <ul id="cal-list"></ul>
+        <div class="cal-view-container">
+          <div class="cal-grid-header">
+            <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+          </div>
+          <div class="cal-grid-body" id="cal-grid"></div>
         </div>
       </section>
+
+      <!-- BOTTOM SHEET (CALENDAR) -->
+      <div class="cal-sheet-backdrop" id="cal-sheet-backdrop"></div>
+      <div class="cal-bottom-sheet" id="cal-bottom-sheet">
+        <div class="cbs-handle-area" id="cbs-handle-area">
+          <div class="cbs-handle"></div>
+        </div>
+        <div class="cbs-header">
+          <h3 id="cbs-date-title">--</h3>
+          <button id="cbs-close-btn" class="btn-icon" style="font-size:24px; color:var(--gray-dark); background:none; border:none; padding:0;">✕</button>
+        </div>
+        <div class="cbs-content scrollable">
+          <div class="cbs-meal-section">
+            <div class="cbs-meal-title" style="color:var(--orange);">🌞 점심 (중식)</div>
+            <div id="cbs-lunch-list" class="cbs-meal-list"></div>
+          </div>
+          <div class="cbs-meal-section" style="margin-top:24px;">
+            <div class="cbs-meal-title" style="color:var(--blue);">🌙 저녁 (석식)</div>
+            <div id="cbs-dinner-list" class="cbs-meal-list"></div>
+          </div>
+        </div>
+        <div class="cbs-action">
+          <button class="btn-primary btn-apple-glass" id="btn-cbs-nutrition">
+            <span style="font-size:18px; margin-right:6px;">📊</span> 종합 영양 정밀 분석
+          </button>
+        </div>
+      </div>
 
       <!-- PHOTO -->
       <section class="page" id="page-photo">

@@ -400,61 +400,155 @@
     if (target) target.classList.add('active');
   }
 
-  // ═══ CALENDAR ═══
+  // ═══ CALENDAR (MONTHLY) ═══
+  var calCurrentDate = new Date();
+
   function renderCalendar() {
-    var strip = $('week-strip');
-    strip.innerHTML = '';
+    var year = calCurrentDate.getFullYear();
+    var month = calCurrentDate.getMonth();
+    var monthTitle = $('cal-month-title');
+    if(monthTitle) monthTitle.textContent = year + '.' + String(month + 1).padStart(2, '0');
 
-    var now = new Date();
-    var dow = now.getDay();
-    var monday = new Date(now);
-    monday.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+    var grid = $('cal-grid');
+    if(!grid) return;
+    grid.innerHTML = '';
 
-    var labels = ['월', '화', '수', '목', '금'];
-    for (var i = 0; i < 5; i++) {
-      var dd = new Date(monday);
-      dd.setDate(monday.getDate() + i);
-      var ds = dd.getFullYear() + '-' + String(dd.getMonth() + 1).padStart(2, '0') + '-' + String(dd.getDate()).padStart(2, '0');
-      var isToday = ds === todayStr();
+    var firstDay = new Date(year, month, 1);
+    var startDayOfWeek = firstDay.getDay(); 
+    var daysInMonth = new Date(year, month + 1, 0).getDate();
 
-      var el = document.createElement('div');
-      el.className = 'week-day' + (isToday ? ' active' : '');
-      el.setAttribute('data-date', ds);
-      el.innerHTML = '<small>' + labels[i] + '</small><strong>' + dd.getDate() + '</strong>';
-      el.addEventListener('click', function () {
-        var wds = $$('.week-day');
-        for (var w = 0; w < wds.length; w++) wds[w].classList.remove('active');
-        this.classList.add('active');
-        renderCalendarDetail(this.getAttribute('data-date'));
-      });
-      strip.appendChild(el);
+    // 1일 요일만큼 빈 칸
+    for (var i = 0; i < startDayOfWeek; i++) {
+      var emptyCell = document.createElement('div');
+      emptyCell.className = 'cal-cell empty';
+      grid.appendChild(emptyCell);
     }
 
-    renderCalendarDetail(todayStr());
+    // 날짜 렌더링
+    var tsStr = todayStr();
+    for (var d = 1; d <= daysInMonth; d++) {
+      var currentCellDate = new Date(year, month, d);
+      var currentDow = currentCellDate.getDay();
+      var ds = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      var isToday = ds === tsStr;
+
+      var cell = document.createElement('div');
+      cell.className = 'cal-cell' + (isToday ? ' today' : '');
+      if (currentDow === 0) cell.classList.add('sunday');
+      if (currentDow === 6) cell.classList.add('saturday');
+
+      var mealData = loadMeals(ds);
+      var hasLunch = mealData && mealData.lunch && mealData.lunch.length > 0;
+      var hasDinner = mealData && mealData.dinner && mealData.dinner.length > 0;
+
+      cell.innerHTML = '<div class="cal-cell-day">' + d + '</div>' +
+        '<div class="cal-indicator-dots">' +
+        (hasLunch ? '<div class="cal-dot lunch"></div>' : '') +
+        (hasDinner ? '<div class="cal-dot dinner"></div>' : '') +
+        '</div>';
+
+      (function(dateString, data) {
+         cell.addEventListener('click', function() {
+           openCalSheet(dateString, data);
+         });
+      })(ds, mealData);
+
+      grid.appendChild(cell);
+    }
   }
 
-  function renderCalendarDetail(dateStr) {
-    var d = new Date(dateStr);
-    var dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-    $('cal-title').textContent = dayNames[d.getDay()] + '요일 점심';
+  var btnCalPrev = $('cal-prev-btn');
+  if(btnCalPrev) btnCalPrev.addEventListener('click', function() {
+    calCurrentDate.setMonth(calCurrentDate.getMonth() - 1);
+    renderCalendar();
+  });
+  
+  var btnCalNext = $('cal-next-btn');
+  if(btnCalNext) btnCalNext.addEventListener('click', function() {
+    calCurrentDate.setMonth(calCurrentDate.getMonth() + 1);
+    renderCalendar();
+  });
 
-    var data = loadMeals(dateStr);
-    var list = $('cal-list');
-    list.innerHTML = '';
+  // ═══ CALENDAR BOTTOM SHEET ═══
+  var calSheetBackdrop = $('cal-sheet-backdrop');
+  var calBottomSheet = $('cal-bottom-sheet');
+  var cbsSelectedDate = '';
+  
+  function openCalSheet(dateStr, data) {
+    cbsSelectedDate = dateStr;
+    calSheetBackdrop = $('cal-sheet-backdrop');
+    calBottomSheet = $('cal-bottom-sheet');
+    if(!calBottomSheet) return;
+    
+    var dObj = new Date(dateStr);
+    var dayNames = ['일','월','화','수','목','금','토'];
+    $('cbs-date-title').textContent = (dObj.getMonth() + 1) + '월 ' + dObj.getDate() + '일 (' + dayNames[dObj.getDay()] + ')';
 
-    if (!data || !data.lunch || data.lunch.length === 0) {
-      var li = document.createElement('li');
-      li.textContent = '등록된 급식 정보가 없습니다';
-      li.style.color = 'var(--ink-3)';
-      list.appendChild(li);
-      return;
+    var lList = $('cbs-lunch-list');
+    var dList = $('cbs-dinner-list');
+    if(lList) lList.innerHTML = ''; 
+    if(dList) dList.innerHTML = '';
+
+    function makeMealItems(mealArr, targetUl) {
+      if (!targetUl) return;
+      if (!mealArr || mealArr.length === 0) {
+        targetUl.innerHTML = '<div class="cbs-empty">등록된 급식/석식 정보가 없습니다.</div>';
+        return;
+      }
+      mealArr.forEach(function(m) {
+        var isDanger = false;
+        if (m.allergy && currentUser && currentUser.allergies) {
+           var mAllgs = m.allergy.split('·').map(function(a){return a.trim()});
+           for(var k=0; k<mAllgs.length; k++) {
+             if(currentUser.allergies.includes(mAllgs[k])){ isDanger=true; break; }
+           }
+        }
+        var div = document.createElement('div');
+        div.className = 'cbs-meal-item';
+        if(isDanger) { div.style.border = '1.5px solid var(--red)'; div.style.background = '#ffebee'; }
+        div.innerHTML = '<span style="font-size:22px; margin-right:12px;">' + m.emoji + '</span>' + 
+                        '<div style="flex:1;">' + m.name + ' <span style="color:var(--text-3); font-size:12px; margin-left:6px;">' + m.kcal + 'kcal</span></div>' + 
+                        (isDanger ? '<span style="color:var(--red); font-size:13px; font-weight:800;">🚨 주의</span>' : '');
+        targetUl.appendChild(div);
+      });
     }
 
-    for (var i = 0; i < data.lunch.length; i++) {
-      var item = document.createElement('li');
-      item.textContent = data.lunch[i].emoji + '  ' + data.lunch[i].name;
-      list.appendChild(item);
-    }
+    makeMealItems(data ? data.lunch : [], lList);
+    makeMealItems(data ? data.dinner : [], dList);
+
+    calSheetBackdrop.classList.add('show');
+    calBottomSheet.classList.add('show');
+  }
+
+  function closeCalSheet() {
+    if(!calBottomSheet) return;
+    calSheetBackdrop.classList.remove('show');
+    calBottomSheet.classList.remove('show');
+  }
+
+  if($('cbs-close-btn')) $('cbs-close-btn').addEventListener('click', closeCalSheet);
+  if($('cal-sheet-backdrop')) $('cal-sheet-backdrop').addEventListener('click', closeCalSheet);
+
+  var sheetStartY = 0;
+  var sheetCurrentY = 0;
+  var handleArea = $('cbs-handle-area');
+  if(handleArea) {
+      handleArea.addEventListener('touchstart', function(e) { sheetStartY = e.touches[0].clientY; }, {passive:true});
+      handleArea.addEventListener('touchmove', function(e) {
+        sheetCurrentY = e.touches[0].clientY;
+        if (sheetCurrentY - sheetStartY > 30) closeCalSheet();
+      }, {passive:true});
+  }
+
+  var currentNutritionDate = todayStr();
+
+  var btnNutrition = $('btn-cbs-nutrition');
+  if(btnNutrition) {
+      btnNutrition.addEventListener('click', function() {
+        closeCalSheet();
+        currentNutritionDate = cbsSelectedDate;
+        goPage('nutrition');
+      });
   }
 
   // ═══ PHOTO FEED ═══
@@ -535,9 +629,13 @@
 
   // ═══ NUTRITION ═══
   function renderNutrition() {
-    $('nut-date-text').textContent = todayLabel() + ' ' + (currentMeal === 'lunch' ? '점심' : '저녁');
+    var dObj = new Date(currentNutritionDate);
+    var dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+    var lbl = (dObj.getMonth() + 1) + '월 ' + dObj.getDate() + '일 (' + dayNames[dObj.getDay()] + ')';
+    
+    $('nut-date-text').textContent = lbl + ' ' + (currentMeal === 'lunch' ? '점심' : '저녁');
 
-    var data = loadMeals(todayStr());
+    var data = loadMeals(currentNutritionDate);
     var menus = data ? (data[currentMeal] || []) : [];
 
     var totalKcal = 0;
