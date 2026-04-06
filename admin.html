@@ -130,8 +130,11 @@
 
     <!-- SAVED LIST -->
     <section class="admin-card">
-      <h3>📋 저장된 급식 목록</h3>
-      <div id="saved-list"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0;">📋 저장된 급식 목록</h3>
+        <button class="btn-outline-sm btn-danger-outline" id="btn-clear-month" style="font-size:12px; padding:6px 10px;">🗑 월별 일괄 삭제</button>
+      </div>
+      <div id="saved-list" style="margin-top:12px;"></div>
     </section>
 
     <!-- USER MANAGEMENT -->
@@ -336,6 +339,40 @@
         toast('🗑 삭제되었습니다');
       } else {
         toast('❌ 삭제 실패');
+      }
+    });
+
+    document.getElementById('btn-clear-month').addEventListener('click', async function() {
+      var dateVal = pickDate.value;
+      if (!dateVal) return;
+      var ym = dateVal.substring(0, 7); // yyyy-mm 추출
+      if (!confirm(ym + '월(해당 달)의 모든 식단 데이터를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다!')) return;
+      
+      var keys = Object.keys(cachedMeals);
+      var deletedCount = 0;
+      for (var i = 0; i < keys.length; i++) {
+        if (keys[i].startsWith(ym)) {
+          delete cachedMeals[keys[i]];
+          deletedCount++;
+        }
+      }
+
+      if (deletedCount === 0) {
+        toast('🗑 삭제할 데이터가 없습니다.');
+        return;
+      }
+      
+      var orig = this.textContent;
+      this.textContent = '삭제 중...';
+      const ok = await saveMealsToCloud();
+      this.textContent = orig;
+
+      if(ok) {
+        loadDate(dateVal);
+        renderSaved();
+        toast('✅ ' + ym + '월 데이터 ' + deletedCount + '일치 삭제 완료!');
+      } else {
+        toast('❌ 일괄 삭제 실패');
       }
     });
 

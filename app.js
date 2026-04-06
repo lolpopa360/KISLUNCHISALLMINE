@@ -474,7 +474,7 @@
   var calBottomSheet = $('cal-bottom-sheet');
   var cbsSelectedDate = '';
   
-  function openCalSheet(dateStr, data) {
+  async function openCalSheet(dateStr, data) {
     cbsSelectedDate = dateStr;
     calSheetBackdrop = $('cal-sheet-backdrop');
     calBottomSheet = $('cal-bottom-sheet');
@@ -488,6 +488,23 @@
     var dList = $('cbs-dinner-list');
     if(lList) lList.innerHTML = ''; 
     if(dList) dList.innerHTML = '';
+
+    // 사진 연동
+    var photoBox = $('cbs-today-photo');
+    if (photoBox) {
+      photoBox.style.display = 'none';
+      photoBox.innerHTML = '';
+      try {
+        const res = await fetch('/api/photos?date=' + dateStr);
+        if (res.ok) {
+          const photos = await res.json();
+          if (photos.length > 0) {
+            photoBox.style.display = 'block';
+            photoBox.innerHTML = '<img src="' + photos[0].img + '" style="width:100%; height:200px; object-fit:cover; display:block;" alt="오늘의 특식 사진">';
+          }
+        }
+      } catch(e) { console.warn('Photo fetch failed'); }
+    }
 
     function makeMealItems(mealArr, targetUl) {
       if (!targetUl) return;
@@ -506,9 +523,12 @@
         var div = document.createElement('div');
         div.className = 'cbs-meal-item';
         if(isDanger) { div.style.border = '1.5px solid var(--red)'; div.style.background = '#ffebee'; }
-        div.innerHTML = '<span style="font-size:22px; margin-right:12px;">' + m.emoji + '</span>' + 
-                        '<div style="flex:1;">' + m.name + ' <span style="color:var(--text-3); font-size:12px; margin-left:6px;">' + m.kcal + 'kcal</span></div>' + 
-                        (isDanger ? '<span style="color:var(--red); font-size:13px; font-weight:800;">🚨 주의</span>' : '');
+        
+        // 이모지(m.emoji) 완전 제거 후 깔끔한 타이포그래피 유지
+        div.innerHTML = '<div style="width:6px; height:6px; background:var(--text); border-radius:50%; margin: 8px 12px 0 4px; flex-shrink:0;"></div>' + 
+                        '<div style="flex:1;">' + m.name + ' <span style="color:var(--text-3); font-size:12px; margin-left:6px;">' + (m.kcal||0) + 'kcal</span></div>' + 
+                        (isDanger ? '<span style="color:var(--red); font-size:13px; font-weight:800;">🚨 알레르기 위험</span>' : '');
+        div.style.alignItems = 'flex-start';
         targetUl.appendChild(div);
       });
     }
