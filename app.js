@@ -200,23 +200,31 @@
 
   // ═══ APP INIT ═══
   function initApp() {
-    $('clock').textContent = clockStr();
-    setInterval(function () { $('clock').textContent = clockStr(); }, 30000);
-
-    $('welcome-text').textContent = '안녕하세요, ' + (currentUser ? currentUser.name : '') + '님! 👋';
-    $('date-display').textContent = todayLabel();
-
-    renderHome();
-    setupTabs();
+    // 1. 필수 UI 인터랙션 우선 설정 (데이터 로딩과 무관하게 작동해야 함)
     setupNav();
+    setupTabs();
+
+    var clk = $('clock');
+    if (clk) {
+      clk.textContent = clockStr();
+      setInterval(function () { clk.textContent = clockStr(); }, 30000);
+    }
+
+    var wt = $('welcome-text');
+    if (wt) wt.textContent = '안녕하세요, ' + (currentUser ? currentUser.name : '') + '님! 👋';
+    
+    var dd = $('date-display');
+    if (dd) dd.textContent = todayLabel();
+
+    // 2. 비즈니스 로직 렌더링
+    renderHome();
     renderCalendar();
     renderFeed();
-    // 영양 분석은 홈 화면 초기화 시점에 함께 실행됨
     renderAllergy();
     setupUpload();
     initFeedDateNav();
 
-    // 홈 화면 영양 분석 토글 이벤트
+    // 3. 부가 기능 이벤트 리스너 (요소 존재 여부 상시 체크)
     var htl = $('home-toggle-lunch');
     var htd = $('home-toggle-dinner');
     if (htl && htd) {
@@ -230,10 +238,14 @@
       });
     }
 
-    $('goto-photo').addEventListener('click', function () { goPage('photo'); });
-    $('btn-bell').addEventListener('click', function () { toast('🔔 새로운 알림이 없습니다'); });
+    var gp = $('goto-photo');
+    if (gp) gp.addEventListener('click', function () { goPage('photo'); });
+    
+    var bb = $('btn-bell');
+    if (bb) bb.addEventListener('click', function () { toast('🔔 새로운 알림이 없습니다'); });
+    
     var bp = $('btn-profile');
-    if(bp) bp.addEventListener('click', function () { goPage('profile'); renderProfile(); });
+    if (bp) bp.addEventListener('click', function () { goPage('profile'); renderProfile(); });
   }
 
   // ═══ HOME ═══
@@ -244,14 +256,16 @@
     var empty = $('empty-state');
     
     // 타이틀 및 날짜 표시 업데이트
+    var hmt = $('home-meal-title');
+    var dd = $('date-display');
     if (isTomorrowOnHome()) {
-      $('home-meal-title').textContent = '🌙 내일의 식단';
+      if (hmt) hmt.textContent = '🌙 내일의 식단';
       var d = new Date(); d.setDate(d.getDate() + 1);
       var days = ['일','월','화','수','목','금','토'];
-      $('date-display').textContent = d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + days[d.getDay()] + '요일';
+      if (dd) dd.textContent = d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + days[d.getDay()] + '요일';
     } else {
-      $('home-meal-title').textContent = '☀️ 오늘의 식단';
-      $('date-display').textContent = todayLabel();
+      if (hmt) hmt.textContent = '☀️ 오늘의 식단';
+      if (dd) dd.textContent = todayLabel();
     }
 
     grid.innerHTML = '';
@@ -259,8 +273,6 @@
     if (!data) {
       grid.style.display = 'none';
       empty.style.display = '';
-      $('kcal-num').textContent = '0';
-      $('kcal-desc').textContent = '데이터 없음';
       return;
     }
 
@@ -268,8 +280,6 @@
     if (menus.length === 0) {
       grid.style.display = 'none';
       empty.style.display = '';
-      $('kcal-num').textContent = '0';
-      $('kcal-desc').textContent = (currentMeal === 'lunch' ? '점심' : '저녁') + ' 정보 없음';
       return;
     }
 
@@ -278,8 +288,7 @@
 
     var totalKcal = 0;
     for (var i = 0; i < menus.length; i++) totalKcal += (menus[i].kcal || 0);
-    $('kcal-num').textContent = totalKcal;
-    $('kcal-desc').textContent = '권장량의 ' + Math.round((totalKcal / 850) * 100) + '%';
+    // kcal-num/desc 대신 home-insight 카드가 역할을 수행함 (renderNutrition 호출 시 업데이트됨)
 
     for (var j = 0; j < menus.length; j++) {
       var m = menus[j];
@@ -312,10 +321,8 @@
       grid.appendChild(card);
     }
 
-    // 홈 화면 영양 분석 렌더링 (현재 선택된 끼니 기준)
-    var activeToggle = document.querySelector('.insight-toggle .active');
-    var mealType = activeToggle ? activeToggle.getAttribute('data-meal') : currentMeal;
-    renderNutrition(dateStr, 'home', mealType);
+    // 홈 화면 영양 분석 렌더링 (현재 선택된 메인 탭 기준 우선)
+    renderNutrition(dateStr, 'home', currentMeal);
   }
 
   // ═══ TABS ═══
@@ -328,6 +335,17 @@
         currentMeal = this.getAttribute('data-meal');
         renderHome();
         renderAllergy();
+        
+        // 홈 인사이트 카드의 토글 버튼도 동기화 (UI 일관성)
+        var htl = $('home-toggle-lunch');
+        var htd = $('home-toggle-dinner');
+        if (htl && htd) {
+          if (currentMeal === 'lunch') {
+            htl.classList.add('active'); htd.classList.remove('active');
+          } else {
+            htd.classList.add('active'); htl.classList.remove('active');
+          }
+        }
       });
     }
   }

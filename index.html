@@ -126,19 +126,16 @@
       <section class="page active" id="page-home">
         <div class="home-welcome">
           <p class="welcome-hi" id="welcome-text">안녕하세요!</p>
-          <h2 id="date-display">오늘 급식</h2>
+          <div style="display:flex; justify-content:space-between; align-items:baseline;">
+            <h2 id="date-display">오늘 급식</h2>
+            <span id="home-meal-title" style="font-size:14px; font-weight:600; color:var(--green); background:rgba(22,163,74,0.1); padding:4px 10px; border-radius:12px;">☀️ 오늘의 식단</span>
+          </div>
         </div>
         <div class="tab-bar">
           <button class="tab active" data-meal="lunch">🌞 점심</button>
           <button class="tab" data-meal="dinner">🌙 저녁</button>
         </div>
-        <div class="kcal-banner">
-          <div class="kcal-left">
-            <span class="kcal-number" id="kcal-num">0</span>
-            <span class="kcal-unit">kcal</span>
-          </div>
-          <span class="kcal-desc" id="kcal-desc">관리자가 등록하면 표시됩니다</span>
-        </div>
+        <!-- OLD kcal-banner removed for home-insight integration -->
         <div class="menu-grid" id="menu-grid"></div>
         <div class="empty-state" id="empty-state" style="display:none">
           <div class="empty-mascot">
