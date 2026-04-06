@@ -216,6 +216,20 @@
     setupUpload();
     initFeedDateNav();
 
+    // 홈 화면 영양 분석 토글 이벤트
+    var htl = $('home-toggle-lunch');
+    var htd = $('home-toggle-dinner');
+    if (htl && htd) {
+      htl.addEventListener('click', function() {
+        htl.classList.add('active'); htd.classList.remove('active');
+        renderNutrition(todayStr(), 'home', 'lunch');
+      });
+      htd.addEventListener('click', function() {
+        htd.classList.add('active'); htl.classList.remove('active');
+        renderNutrition(todayStr(), 'home', 'dinner');
+      });
+    }
+
     $('goto-photo').addEventListener('click', function () { goPage('photo'); });
     $('btn-bell').addEventListener('click', function () { toast('🔔 새로운 알림이 없습니다'); });
     var bp = $('btn-profile');
@@ -298,8 +312,10 @@
       grid.appendChild(card);
     }
 
-    // 홈 화면 하단에 영양 분석 렌더링
-    renderNutrition(dateStr, 'home');
+    // 홈 화면 영양 분석 렌더링 (현재 선택된 끼니 기준)
+    var activeToggle = document.querySelector('.insight-toggle .active');
+    var mealType = activeToggle ? activeToggle.getAttribute('data-meal') : currentMeal;
+    renderNutrition(dateStr, 'home', mealType);
   }
 
   // ═══ TABS ═══
@@ -310,7 +326,6 @@
         for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove('active');
         this.classList.add('active');
         currentMeal = this.getAttribute('data-meal');
-        renderHome();
         renderHome();
         renderAllergy();
       });
@@ -555,8 +570,9 @@
     makeMealItems(data ? data.lunch : [], lList);
     makeMealItems(data ? data.dinner : [], dList);
 
-    // 통합 영양 분석 렌더링 (메뉴 아래에 위치)
-    renderNutrition(dateStr, 'cbs');
+    // 통합 영양 분석 렌더링 (중식/석식 각각)
+    renderNutrition(dateStr, 'cbs-lunch', 'lunch');
+    renderNutrition(dateStr, 'cbs-dinner', 'dinner');
 
     calSheetBackdrop.classList.add('show');
     calBottomSheet.classList.add('show');
@@ -585,20 +601,12 @@
       }, {passive:true});
   }
 
-  var btnNutrition = $('btn-cbs-nutrition');
-  if(btnNutrition) {
-      btnNutrition.addEventListener('click', function() {
-        // 기존 버튼은 숨김 처리할 예정이지만 로직상 남겨둠
-        closeCalSheet();
-        goPage('nutrition');
-      });
-  }
-
   // ═══ PHOTO FEED ═══
   var feedDate = todayStr();
 
   function initFeedDateNav() {
     var dateInput = $('feed-date');
+    if (!dateInput) return;
     dateInput.value = feedDate;
     dateInput.addEventListener('change', function() {
       feedDate = this.value;
@@ -622,6 +630,7 @@
 
   async function renderFeed() {
     var list = $('feed-list');
+    if (!list) return;
     list.innerHTML = '<div class="empty-state"><p>사진을 불러오는 중...</p></div>';
     
     try {
@@ -671,138 +680,136 @@
   }
 
   // ═══ NUTRITION (Integrated) ═══
-  function renderNutrition(dateStr, containerPrefix) {
-    if (!$(containerPrefix + '-radar')) return;
-
-    var dObj = new Date(dateStr);
-    var dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-    var lbl = (dObj.getMonth() + 1) + '월 ' + dObj.getDate() + '일 (' + dayNames[dObj.getDay()] + ')';
+  function generateCoachAdvice(menus) {
+    if (!menus || menus.length === 0) return "급식 정보가 등록되지 않았습니다.";
     
-    var dateEl = $(containerPrefix + '-date-text');
-    if (dateEl) dateEl.textContent = lbl + ' ' + (currentMeal === 'lunch' ? '점심' : '저녁');
+    var kcal = menus.reduce((acc, m) => acc + (m.kcal || 0), 0);
+    var advice = [];
+    var names = menus.map(m => m.name).join(' ');
+
+    // 카테고리 분석
+    var hasMeats = /고기|불고기|닭|돈육|스테이크|햄|너겟|까스|살|Beef|Chicken|Pork/.test(names);
+    var hasGreens = /샐러드|나물|무침|쌈|야채|채소|겉절이|Salad/.test(names);
+    var hasFried = /튀김|까스|칩|치킨|강정|Fried/.test(names);
+    var hasSodium = /국|개|탕|찌개|볶음|조림|Soup|Stew/.test(names);
+
+    if (kcal > 950) advice.push("열량이 꽤 높아요! 밥양을 조금 조절하고 많이 움직여볼까요? 🏃‍♂️");
+    else if (kcal < 550) advice.push("오늘은 아주 가벼운 식단이네요. 견과류나 우유를 더 챙겨 드셔도 좋겠어요! 🔋");
+
+    if (hasFried) advice.push("바삭한 튀김 메뉴가 있어요. 지방 함량이 높을 수 있으니 나물을 먼저 드셔보세요! 🥗");
+    if (!hasGreens) advice.push("오늘 식단에는 채소가 부족해 보여요. 비타민 보충을 위해 과일을 챙겨 드세요! 🍎");
+    if (hasMeats && hasGreens) advice.push("고기와 채소의 조화가 훌륭해요! 근육도 만들고 소화도 잘 되는 100점 식단입니다. ✨");
+    if (hasSodium && !hasGreens) advice.push("국물이 있는 메뉴는 나트륨이 높으니 국물보다는 건더기 위주로 드시는 걸 추천해요! 💧");
+    
+    if (advice.length === 0) advice.push("영양소가 골고루 갖춰진 균형 잡힌 식단입니다. 맛있게 즐기세요! 🍽️");
+    
+    return advice[advice.length - 1];
+  }
+
+  function renderNutrition(dateStr, containerPrefix, mealType) {
+    var radarEl = $(containerPrefix + '-radar');
+    if (!radarEl) return;
 
     var data = loadMeals(dateStr);
-    var menus = data ? (data[currentMeal] || []) : [];
+    var menus = data ? (data[mealType || currentMeal] || []) : [];
 
-    var totalKcal = 0;
-    for (var i = 0; i < menus.length; i++) totalKcal += (menus[i].kcal || 0);
+    var totalKcal = 0, p = 0, f = 0, c = 0, na = 0;
+    menus.forEach(m => {
+      totalKcal += (m.kcal || 0);
+      p += (m.p || 0);
+      f += (m.f || 0);
+      c += (m.c || 0);
+      na += (m.na || 0);
+    });
     
     var kcalEl = $(containerPrefix + '-kcal');
     if (kcalEl) kcalEl.textContent = totalKcal;
     
-    var cntEl = $(containerPrefix + '-cnt');
-    if (cntEl) cntEl.textContent = menus.length;
-
-    var protein = Math.round(totalKcal * 0.15 / 4);
-    var fat = Math.round(totalKcal * 0.25 / 9);
-    var carbs = Math.round(totalKcal * 0.6 / 4);
-    var sodium = Math.round(totalKcal * 1.2);
-    var allergyCount = 0;
-    for (var a = 0; a < menus.length; a++) { if (menus[a].allergy) allergyCount++; }
-
-    // AI Smart Coach Logic (Dietary Advice)
-    var smartComments = [];
-    if (totalKcal === 0) {
-      smartComments.push('급식 정보가 등록되지 않았습니다.');
-    } else {
-      if (totalKcal > 1000) smartComments.push('오늘 식단은 열량이 다소 높습니다! 점심에 많이 드셨다면 저녁은 가볍게 드시는 게 좋겠네요. 🏃‍♂️');
-      else if (totalKcal < 600) smartComments.push('열량이 가벼운 식단입니다. 활동량이 많다면 견과류나 우유를 더 챙겨 드셔보세요. 🔋');
-      
-      if (menus.some(m => m.name.includes('돈까스') || m.name.includes('튀김') || m.name.includes('치킨'))) {
-        smartComments.push('바삭한 튀김 메뉴가 포함되어 지방이 높을 수 있어요. 식이섬유가 많은 나물/야채를 먼저 드시는 걸 추천해요! 🥗');
-      } else if (menus.some(m => m.name.includes('샐러드') || m.name.includes('무침') || m.name.includes('나물'))) {
-        smartComments.push('채소 메뉴가 풍부해 식이섬유가 가득합니다. 포만감이 유지되고 소화에 아주 좋은 균형 잡힌 식단이에요! ✨');
-      } else {
-         smartComments.push('전반적으로 영양소 분배가 적절한 건강 식단입니다. 천천히 씹어 드시며 맛을 즐겨보세요! 🍽️');
-      }
-    }
     var commentEl = $(containerPrefix + '-comment');
-    if (commentEl) commentEl.textContent = smartComments[smartComments.length-1];
+    if (commentEl) commentEl.textContent = generateCoachAdvice(menus);
 
-    // Radar Chart Logic (Hexagon)
-    var canvas = $(containerPrefix + '-radar');
+    // Radar Chart Logic
+    var canvas = radarEl;
     var ctx = canvas.getContext('2d');
     var w = canvas.width; var h = canvas.height;
     var cx = w / 2; var cy = h / 2;
-    var radius = containerPrefix === 'home' ? 100 : 140; // 홈에서는 조금 작게
+    var radius = (containerPrefix === 'home' || containerPrefix.startsWith('cbs')) ? 100 : 140;
 
-    // Data Calculation (0.0 ~ 1.0)
-    var seed = dateStr.charCodeAt(dateStr.length-1) || 0;
-    var rFloat = function(min, max, offset) { return min + ((seed + offset) % 100) / 100 * (max - min); };
-    
+    // Data Mapping
     var dataVals = [
-      Math.min((totalKcal ? carbs / 130 : 0) + rFloat(0, 0.2, 1), 1.0),   // 탄수화물
-      Math.min((totalKcal ? protein / 55 : 0) + rFloat(0, 0.3, 2), 1.0),  // 단백질
-      Math.min((totalKcal ? fat / 44 : 0) + rFloat(0, 0.2, 3), 1.0),      // 지방
-      Math.min((totalKcal ? sodium / 2000 : 0) + rFloat(0, 0.4, 4), 1.0), // 나트륨
-      rFloat(0.5, totalKcal ? 0.9 : 0, 5),                                // 비타민
-      rFloat(0.4, totalKcal ? 0.8 : 0, 6)                                 // 칼슘
+      Math.min(c / 120, 1.0),   // 탄수화물
+      Math.min(p / 50, 1.0),    // 단백질
+      Math.min(f / 40, 1.0),    // 지방
+      Math.min(na / 1800, 1.0), // 나트륨
+      totalKcal > 0 ? 0.7 : 0,  // 비타민 (추정)
+      totalKcal > 0 ? 0.6 : 0   // 칼슘 (추정)
     ];
     if(totalKcal === 0) dataVals = [0,0,0,0,0,0];
 
     var labels = ['탄수화물', '단백질', '지방', '나트륨', '비타민', '칼슘'];
 
     ctx.clearRect(0,0,w,h);
-    // Draw Web
     ctx.lineWidth = 1;
-    ctx.strokeStyle = '#e2e8f0';
+    ctx.strokeStyle = (document.documentElement.classList.contains('dark') || window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'rgba(255,255,255,0.2)' : '#e2e8f0';
+    
     for (var level = 1; level <= 4; level++) {
        ctx.beginPath();
        for (var i = 0; i < 6; i++) {
-          var angle = (Math.PI / 3) * i - Math.PI/2;
-          var r = radius * (level / 4);
-          var x = cx + r * Math.cos(angle);
-          var y = cy + r * Math.sin(angle);
-          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+         var angle = (Math.PI * 2 / 6) * i - Math.PI / 2;
+         var r = (radius / 4) * level;
+         var x = cx + r * Math.cos(angle);
+         var y = cy + r * Math.sin(angle);
+         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
        }
        ctx.closePath(); ctx.stroke();
     }
-    // Draw Axis & Labels
-    ctx.font = (containerPrefix === 'home' ? 'bold 18px' : 'bold 24px') + ' -apple-system, sans-serif';
-    for (var i = 0; i < 6; i++) {
-        var angle = (Math.PI / 3) * i - Math.PI/2;
-        var lx = cx + radius * Math.cos(angle);
-        var ly = cy + radius * Math.sin(angle);
-        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(lx, ly); ctx.stroke();
-        
-        ctx.fillStyle = '#94a3b8';
-        var labelDist = containerPrefix === 'home' ? 25 : 40;
-        var tx = cx + (radius + labelDist) * Math.cos(angle);
-        var ty = cy + (radius + labelDist) * Math.sin(angle);
-        ctx.textAlign = 'center'; ctx.fillText(labels[i], tx, ty);
-    }
-    // Area
-    ctx.beginPath();
-    for (var i = 0; i < 6; i++) {
-        var angle = (Math.PI / 3) * i - Math.PI/2;
+
+    if (totalKcal > 0) {
+      ctx.beginPath();
+      for (var i = 0; i < 6; i++) {
+        var angle = (Math.PI * 2 / 6) * i - Math.PI / 2;
         var r = radius * dataVals[i];
         var x = cx + r * Math.cos(angle);
         var y = cy + r * Math.sin(angle);
         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.4)';
+      ctx.fill();
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 3; ctx.stroke();
     }
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(16, 185, 129, 0.3)';
-    ctx.fill();
-    ctx.lineWidth = 3; ctx.strokeStyle = '#10b981'; ctx.stroke();
 
-    // Stats Grid 렌더링
+    // Labels
+    ctx.fillStyle = (document.documentElement.classList.contains('dark') || window.matchMedia('(prefers-color-scheme: dark)').matches) ? '#cbd5e1' : '#64748b';
+    ctx.font = '700 12px Inter';
+    ctx.textAlign = 'center';
+    for (var i = 0; i < 6; i++) {
+      var angle = (Math.PI * 2 / 6) * i - Math.PI / 2;
+      var r = radius + 20;
+      var lx = cx + r * Math.cos(angle);
+      var ly = cy + r * Math.sin(angle);
+      ctx.fillText(labels[i], lx, ly + 5);
+    }
+
+    // Stats Grid
     var statGrid = $(containerPrefix + '-stat-grid');
     if (statGrid) {
       statGrid.innerHTML = '';
       var stats = [
-        { v: protein + 'g', l: '단백질', lo: false },
-        { v: fat + 'g', l: '지방', lo: fat > 25 },
-        { v: carbs + 'g', l: '탄수화물', lo: false },
+        { v: Math.round(p) + 'g', l: '단백질', lo: false },
+        { v: Math.round(f) + 'g', l: '지방', lo: f > 30 },
+        { v: Math.round(c) + 'g', l: '탄수화물', lo: false },
         { v: String(totalKcal), l: '칼로리', lo: false },
-        { v: String(allergyCount), l: '알레르기⚠', lo: allergyCount > 0 },
+        { v: Math.round(na) + 'mg', l: '나트륨', lo: na > 1500 },
         { v: String(menus.length), l: '메뉴 수', lo: false }
       ];
-      for (var s = 0; s < stats.length; s++) {
+      stats.forEach(function(s) {
         var cell = document.createElement('div');
         cell.className = 'stat-cell';
-        cell.innerHTML = '<div class="stat-val' + (stats[s].lo ? ' lo' : '') + '">' + stats[s].v + '</div><span class="stat-lbl">' + stats[s].l + '</span>';
+        cell.innerHTML = '<div class="stat-val' + (s.lo ? ' lo' : '') + '">' + s.v + '</div><span class="stat-lbl">' + s.l + '</span>';
         statGrid.appendChild(cell);
-      }
+      });
     }
   }
 
@@ -810,60 +817,55 @@
   function renderAllergy() {
     var data = loadMeals(todayStr());
     var menus = data ? (data[currentMeal] || []) : [];
-
     var allergens = {};
-    for (var i = 0; i < menus.length; i++) {
-      if (menus[i].allergy) {
-        var parts = menus[i].allergy.split('·');
-        for (var p = 0; p < parts.length; p++) allergens[parts[p].trim()] = true;
+    menus.forEach(function(m) {
+      if (m.allergy) {
+        m.allergy.split('·').forEach(function(p) { allergens[p.trim()] = true; });
       }
-    }
+    });
 
     var tags = $('allergy-tags');
-    tags.innerHTML = '';
-    var keys = Object.keys(allergens);
-    for (var k = 0; k < keys.length; k++) {
-      var tag = document.createElement('span');
-      tag.className = 'allergy-tag tag-warn';
-      tag.textContent = '⚠ ' + keys[k];
-      tags.appendChild(tag);
-    }
-    var safeCount = 0;
-    for (var sc = 0; sc < menus.length; sc++) { if (!menus[sc].allergy) safeCount++; }
-    if (menus.length > 0) {
-      var safeTag = document.createElement('span');
-      safeTag.className = 'allergy-tag tag-safe';
-      safeTag.textContent = '✓ ' + safeCount + '개 안전';
-      tags.appendChild(safeTag);
+    if (tags) {
+      tags.innerHTML = '';
+      Object.keys(allergens).forEach(function(k) {
+        var tag = document.createElement('span');
+        tag.className = 'allergy-tag tag-warn';
+        tag.textContent = '⚠ ' + k;
+        tags.appendChild(tag);
+      });
+      var safeCount = menus.filter(m => !m.allergy).length;
+      if (menus.length > 0) {
+        var st = document.createElement('span');
+        st.className = 'allergy-tag tag-safe';
+        st.textContent = '✓ ' + safeCount + '개 안전';
+        tags.appendChild(st);
+      }
     }
 
     var cards = $('allergy-cards');
-    cards.innerHTML = '';
-    if (menus.length === 0) {
-      cards.innerHTML = '<div class="empty-state"><p>등록된 급식 정보가 없습니다</p></div>';
-      return;
-    }
-    for (var c = 0; c < menus.length; c++) {
-      var m = menus[c];
-      var item = document.createElement('div');
-      var isDanger = false;
-      if (m.allergy && currentUser && currentUser.allergies) {
-        var mAllergies = m.allergy.split('·').map(function(a){return a.trim()});
-        for (var k = 0; k < mAllergies.length; k++) {
-          if (currentUser.allergies.includes(mAllergies[k])) {
-            isDanger = true; break;
-          }
-        }
+    if (cards) {
+      cards.innerHTML = '';
+      if (menus.length === 0) {
+        cards.innerHTML = '<div class="empty-state"><p>등록된 급식 정보가 없습니다</p></div>';
+        return;
       }
-      item.className = 'allergy-item';
-      if(isDanger) { item.style.border = '1.5px solid var(--red)'; item.style.background = '#ffebee'; }
-      item.innerHTML =
-        '<span class="allergy-emoji">' + m.emoji + '</span>' +
-        '<div class="allergy-info"><div class="allergy-name">' + m.name + '</div>' +
-        '<div class="allergy-detail">' + m.kcal + ' kcal</div></div>' +
-        '<span class="allergy-badge ' + (isDanger ? 'ab-warn' : (m.allergy ? 'ab-warn' : 'ab-safe')) + '" style="' + (isDanger ? 'background:var(--red);color:#fff;' : '') + '">' +
-        (isDanger ? '🚨 섭취 위험' : (m.allergy ? '⚠ ' + m.allergy : '✓ 안전')) + '</span>';
-      cards.appendChild(item);
+      menus.forEach(function(m) {
+        var item = document.createElement('div');
+        var isDanger = false;
+        if (m.allergy && currentUser && currentUser.allergies) {
+          var mAllgs = m.allergy.split('·').map(a => a.trim());
+          isDanger = mAllgs.some(a => currentUser.allergies.includes(a));
+        }
+        item.className = 'allergy-item';
+        if(isDanger) { item.style.border = '1.5px solid var(--red)'; item.style.background = '#ffebee'; }
+        item.innerHTML =
+          '<span class="allergy-emoji">' + m.emoji + '</span>' +
+          '<div class="allergy-info"><div class="allergy-name">' + m.name + '</div>' +
+          '<div class="allergy-detail">' + m.kcal + ' kcal</div></div>' +
+          '<span class="allergy-badge ' + (isDanger ? 'ab-warn' : (m.allergy ? 'ab-warn' : 'ab-safe')) + '" style="' + (isDanger ? 'background:var(--red);color:#fff;' : '') + '">' +
+          (isDanger ? '🚨 섭취 위험' : (m.allergy ? '⚠ ' + m.allergy : '✓ 안전')) + '</span>';
+        cards.appendChild(item);
+      });
     }
   }
 
@@ -871,75 +873,51 @@
   const ALLERGY_LIST = ['난류', '우유', '메밀', '땅콩', '대두', '밀', '고등어', '게', '새우', '돼지고기', '복숭아', '토마토', '아황산류', '호두', '닭고기', '쇠고기', '오징어', '조개류', '잣'];
 
   function renderProfile() {
-    var pName = $('profile-name');
-    var pRole = $('profile-role');
-    var pIni = $('profile-initial');
-    if (pName) pName.textContent = currentUser ? currentUser.name : 'Unknown';
-    if (pRole) pRole.textContent = currentUser ? (currentUser.role === 'admin' ? '👨‍🍳 관리자' : '🧑‍🎓 학생') : '';
-    if (pIni) pIni.textContent = currentUser ? currentUser.name.charAt(0) : '👤';
+    if ($('profile-name')) $('profile-name').textContent = currentUser ? currentUser.name : 'Unknown';
+    if ($('profile-role')) $('profile-role').textContent = currentUser ? (currentUser.role === 'admin' ? '👨‍🍳 관리자' : '🧑‍🎓 학생') : '';
+    if ($('profile-initial')) $('profile-initial').textContent = currentUser ? currentUser.name.charAt(0) : '👤';
 
     var adminBtn = $('admin-access-btn');
-    if (adminBtn) {
-      if (currentUser && currentUser.role === 'admin') {
-        adminBtn.style.display = 'block';
-      } else {
-        adminBtn.style.display = 'none';
-      }
-    }
+    if (adminBtn) adminBtn.style.display = (currentUser && currentUser.role === 'admin') ? 'block' : 'none';
 
     var grid = $('allergy-toggle-grid');
     if (grid) {
       grid.innerHTML = '';
       var myAllergies = (currentUser && currentUser.allergies) || [];
-
-      for (var i = 0; i < ALLERGY_LIST.length; i++) {
-        var al = ALLERGY_LIST[i];
+      ALLERGY_LIST.forEach(function(al) {
         var btn = document.createElement('div');
         btn.className = 'allergy-toggle' + (myAllergies.includes(al) ? ' active' : '');
         btn.textContent = al;
-        (function(button) {
-            button.addEventListener('click', function() {
-                this.classList.toggle('active');
-            });
-        })(btn);
+        btn.onclick = function() { this.classList.toggle('active'); };
         grid.appendChild(btn);
-      }
+      });
     }
   }
 
   var btnSaveProfile = $('btn-save-profile');
   if (btnSaveProfile) {
-      btnSaveProfile.addEventListener('click', async function() {
-          var originalText = this.textContent;
-          this.textContent = '저장 중...';
-          
-          var selected = [];
-          var toggles = $$('.allergy-toggle.active');
-          for(var i=0; i<toggles.length; i++) {
-              selected.push(toggles[i].textContent);
-          }
-
-          try {
-              const res = await fetch('/api/profile', {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ id: currentUser.id, allergies: selected })
-              });
-              if(res.ok) {
-                  currentUser.allergies = selected;
-                  setDB('session', currentUser);
-                  toast('✅ 맞춤 알레르기 설정 저장 완료');
-                  renderHome();
-                  renderNutrition();
-                  renderAllergy();
-              } else {
-                  toast('❌ 저장 실패');
-              }
-          } catch(e) {
-              toast('❌ 네트워크 연결 오류');
-          }
-          this.textContent = originalText;
-      });
+    btnSaveProfile.addEventListener('click', async function() {
+      var btn = this;
+      var orig = btn.textContent;
+      btn.textContent = '저장 중...';
+      
+      var selected = Array.from($$('.allergy-toggle.active')).map(t => t.textContent);
+      try {
+        const res = await fetch('/api/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: currentUser.id, allergies: selected })
+        });
+        if(res.ok) {
+          currentUser.allergies = selected;
+          setDB('session', currentUser);
+          toast('✅ 맞춤 알레르기 설정 저장 완료');
+          renderHome();
+          renderAllergy();
+        } else { toast('❌ 저장 실패'); }
+      } catch(e) { toast('❌ 네트워크 오류'); }
+      btn.textContent = orig;
+    });
   }
 
   // ═══ UPLOAD ═══
@@ -950,83 +928,64 @@
     var previewBox = $('upload-preview');
     var previewImg = $('upload-preview-img');
 
-    $('btn-fab').addEventListener('click', function () { 
-      $('upload-date').value = todayStr();
-      modal.classList.add('show'); 
-    });
-    $('upload-close').addEventListener('click', closeUpload);
-    modal.addEventListener('click', function (e) { if (e.target === modal) closeUpload(); });
-
-    dropZone.addEventListener('click', function () { fileInput.click(); });
-
-    fileInput.addEventListener('change', function () {
-      var file = this.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function (ev) {
-        previewImg.src = ev.target.result;
-        previewBox.style.display = '';
-        dropZone.style.display = 'none';
-      };
-      reader.readAsDataURL(file);
-    });
-
-    $('upload-submit').addEventListener('click', async function () {
-      var btn = this;
-      if (!previewImg.src) return;
-      
-      var origText = btn.textContent;
-      btn.textContent = '사진 최적화 및 업로드 중...';
-      
-      try {
-        var canvas = document.createElement('canvas');
-        var ctx = canvas.getContext('2d');
-        var img = new Image();
-        img.src = previewImg.src;
-        
-        await new Promise(r => img.onload = r);
-        
-        var maxW = 800;
-        var scale = maxW / img.width;
-        if (scale > 1) scale = 1;
-        canvas.width = Math.floor(img.width * scale);
-        canvas.height = Math.floor(img.height * scale);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
-        var base64 = canvas.toDataURL('image/jpeg', 0.8);
-        
-        var uploadDate = $('upload-date').value || todayStr();
-        
-        const res = await fetch('/api/photos', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            date: uploadDate, 
-            photoBase64: base64, 
-            user: currentUser ? currentUser.name : '익명'
-          })
-        });
-        
-        if (res.ok) {
-          toast('✅ 사진이 안전하게 업로드되었습니다!');
-          closeUpload();
-          renderFeed();
-        } else {
-          var errText = await res.text();
-          toast('❌ 업로드 실패: ' + res.status + ' ' + errText.substring(0, 80));
-        }
-      } catch(e) {
-        toast('❌ 서버 연결 오류: ' + e.message);
-      }
-      btn.textContent = origText;
-    });
-
+    if ($('btn-fab')) {
+      $('btn-fab').addEventListener('click', function () { 
+        if ($('upload-date')) $('upload-date').value = todayStr();
+        modal.classList.add('show'); 
+      });
+    }
+    
     function closeUpload() {
       modal.classList.remove('show');
       fileInput.value = '';
       previewBox.style.display = 'none';
       dropZone.style.display = '';
-      $('upload-memo').value = '';
+      if($('upload-memo')) $('upload-memo').value = '';
+    }
+
+    if ($('upload-close')) $('upload-close').addEventListener('click', closeUpload);
+    modal.onclick = function(e){ if(e.target === modal) closeUpload(); };
+    if (dropZone) dropZone.onclick = function(){ fileInput.click(); };
+
+    if (fileInput) {
+      fileInput.onchange = function() {
+        var file = this.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          previewImg.src = e.target.result;
+          previewBox.style.display = '';
+          dropZone.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+      };
+    }
+
+    if ($('upload-submit')) {
+      $('upload-submit').onclick = async function() {
+        if (!previewImg.src) return;
+        var btn = this;
+        var orig = btn.textContent;
+        btn.textContent = '업로드 중...';
+        
+        try {
+          const res = await fetch('/api/photos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              date: $('upload-date').value || todayStr(), 
+              photoBase64: previewImg.src, 
+              user: currentUser ? currentUser.name : '익명'
+            })
+          });
+          if (res.ok) {
+            toast('✅ 성공적으로 업로드되었습니다!');
+            closeUpload();
+            renderFeed();
+          } else { toast('❌ 업로드 실패'); }
+        } catch(e) { toast('❌ 네트워크 오류'); }
+        btn.textContent = orig;
+      };
     }
   }
 

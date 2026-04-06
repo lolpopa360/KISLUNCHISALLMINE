@@ -150,16 +150,24 @@
         </div>
         <!-- HOME INSIGHT (Integrated Nutrition) -->
         <div class="insight-card home-insight" id="home-insight" style="flex-direction:column; padding:20px;">
-          <div style="display:flex; align-items:center; width:100%; gap:14px; margin-bottom:16px;">
-            <div class="insight-icon">👨‍⚕️</div>
-            <div class="insight-body" style="flex:1;">
-               <h4 id="home-meal-title" style="margin-bottom:2px; font-weight:800; font-size:15px; color:var(--text); letter-spacing:-0.4px;">☀️ 오늘의 식단</h4>
-               <p id="home-comment" style="font-size:13px; line-height:1.5; color:var(--text-2); font-weight:600;">데이터를 분석하고 있습니다...</p>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%; margin-bottom:12px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div class="insight-icon">👨‍⚕️</div>
+              <div class="insight-body">
+                 <h4 style="margin:0; font-weight:800; font-size:15px; color:var(--text); letter-spacing:-0.4px;">스마트 영양 분석</h4>
+              </div>
+            </div>
+            <!-- MEAL TOGGLE CAPSULE -->
+            <div class="insight-toggle">
+              <button class="toggle-btn active" data-meal="lunch" id="home-toggle-lunch">점심</button>
+              <button class="toggle-btn" data-meal="dinner" id="home-toggle-dinner">저녁</button>
             </div>
           </div>
+
+          <p id="home-comment" style="font-size:13px; line-height:1.5; color:var(--text-2); font-weight:600; margin-bottom:16px;">데이터를 분석하고 있습니다...</p>
           
           <!-- HOME RADAR AREA -->
-          <div style="width:100%; border-top:1px dashed #d1fae5; padding-top:16px; display:flex; flex-direction:column; align-items:center;">
+          <div style="width:100%; border-top:1px dashed #d1fae5; padding-top:20px; display:flex; flex-direction:column; align-items:center;">
              <div class="cbs-radar-box" style="transform:scale(0.85); margin-top:-10px;">
                 <canvas id="home-radar" width="400" height="400" style="width:200px; height:200px;"></canvas>
                 <div class="cbs-radar-center">
@@ -241,24 +249,44 @@
             <div id="cbs-dinner-list" class="cbs-meal-list"></div>
           </div>
 
-          <!-- INTEGRATED NUTRITION AREA ON SCROLL -->
+          <!-- INTEGRATED NUTRITION AREA (LUNCH) -->
           <div class="cbs-nutrition-divider">
-            <span>📊 상세 영양 분석</span>
+            <span>🥗 중식 정밀 분석</span>
           </div>
-          
           <div class="cbs-nutrition-view">
              <div class="cbs-radar-box">
-                <canvas id="cbs-radar" width="400" height="400" style="width:200px; height:200px;"></canvas>
+                <canvas id="cbs-lunch-radar" width="400" height="400" style="width:200px; height:200px;"></canvas>
                 <div class="cbs-radar-center">
-                   <strong id="cbs-kcal">0</strong>
+                   <strong id="cbs-lunch-kcal">0</strong>
                    <span>kcal</span>
                 </div>
              </div>
-             <div class="stat-grid" id="cbs-stat-grid" style="margin-top:20px;"></div>
+             <div class="stat-grid" id="cbs-lunch-stat-grid" style="margin-top:20px;"></div>
              <div class="insight-card cbs-insight">
                 <div class="insight-body">
-                   <strong>👨‍⚕️ 스마트 식사 코칭</strong>
-                   <p id="cbs-comment">정보를 불러오는 중...</p>
+                   <strong>👨‍⚕️ 중식 스마트 가이드</strong>
+                   <p id="cbs-lunch-comment">정보를 불러오는 중...</p>
+                </div>
+             </div>
+          </div>
+
+          <!-- INTEGRATED NUTRITION AREA (DINNER) -->
+          <div class="cbs-nutrition-divider">
+            <span>🌙 석식 정밀 분석</span>
+          </div>
+          <div class="cbs-nutrition-view">
+             <div class="cbs-radar-box">
+                <canvas id="cbs-dinner-radar" width="400" height="400" style="width:200px; height:200px;"></canvas>
+                <div class="cbs-radar-center">
+                   <strong id="cbs-dinner-kcal">0</strong>
+                   <span>kcal</span>
+                </div>
+             </div>
+             <div class="stat-grid" id="cbs-dinner-stat-grid" style="margin-top:20px;"></div>
+             <div class="insight-card cbs-insight">
+                <div class="insight-body">
+                   <strong>👨‍⚕️ 석식 스마트 가이드</strong>
+                   <p id="cbs-dinner-comment">정보를 불러오는 중...</p>
                 </div>
              </div>
           </div>
