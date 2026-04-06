@@ -773,8 +773,17 @@
     var pRole = $('profile-role');
     var pIni = $('profile-initial');
     if (pName) pName.textContent = currentUser ? currentUser.name : 'Unknown';
-    if (pRole) pRole.textContent = currentUser ? (currentUser.role === 'admin' ? '관리자' : '학생') : '';
+    if (pRole) pRole.textContent = currentUser ? (currentUser.role === 'admin' ? '👨‍🍳 관리자' : '🧑‍🎓 학생') : '';
     if (pIni) pIni.textContent = currentUser ? currentUser.name.charAt(0) : '👤';
+
+    var adminBtn = $('admin-access-btn');
+    if (adminBtn) {
+      if (currentUser && currentUser.role === 'admin') {
+        adminBtn.style.display = 'block';
+      } else {
+        adminBtn.style.display = 'none';
+      }
+    }
 
     var grid = $('allergy-toggle-grid');
     if (grid) {
