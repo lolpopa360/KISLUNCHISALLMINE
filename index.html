@@ -148,6 +148,29 @@
           <p>아직 등록된 급식 정보가 없어요</p>
           <small>관리자가 급식을 등록하면 여기에 나타나요</small>
         </div>
+        <!-- HOME INSIGHT (Integrated Nutrition) -->
+        <div class="insight-card home-insight" id="home-insight" style="flex-direction:column; padding:20px;">
+          <div style="display:flex; align-items:center; width:100%; gap:14px; margin-bottom:16px;">
+            <div class="insight-icon">👨‍⚕️</div>
+            <div class="insight-body" style="flex:1;">
+               <h4 id="home-meal-title" style="margin-bottom:2px; font-weight:800; font-size:15px; color:var(--text); letter-spacing:-0.4px;">☀️ 오늘의 식단</h4>
+               <p id="home-comment" style="font-size:13px; line-height:1.5; color:var(--text-2); font-weight:600;">데이터를 분석하고 있습니다...</p>
+            </div>
+          </div>
+          
+          <!-- HOME RADAR AREA -->
+          <div style="width:100%; border-top:1px dashed #d1fae5; padding-top:16px; display:flex; flex-direction:column; align-items:center;">
+             <div class="cbs-radar-box" style="transform:scale(0.85); margin-top:-10px;">
+                <canvas id="home-radar" width="400" height="400" style="width:200px; height:200px;"></canvas>
+                <div class="cbs-radar-center">
+                   <strong id="home-kcal">0</strong>
+                   <span>kcal</span>
+                </div>
+             </div>
+             <div class="stat-grid" id="home-stat-grid" style="width:100%; margin-top:0px;"></div>
+          </div>
+        </div>
+
         <div class="section-card" id="photo-teaser">
           <div class="section-card-head">
             <span>📸 급식 사진</span>
@@ -210,18 +233,35 @@
           <div id="cbs-today-photo" style="display:none; margin-bottom:20px; border-radius:16px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.12);"></div>
           
           <div class="cbs-meal-section">
-            <div class="cbs-meal-title" style="color:var(--orange);">🍽️ 중식 (점심)</div>
+            <div class="cbs-meal-title" style="color:var(--orange); font-size:16px; font-weight:900;">🍽️ 중식 (점심)</div>
             <div id="cbs-lunch-list" class="cbs-meal-list"></div>
           </div>
-          <div class="cbs-meal-section" style="margin-top:24px;">
-            <div class="cbs-meal-title" style="color:var(--blue);">🍽️ 석식 (저녁)</div>
+          <div class="cbs-meal-section" style="margin-top:32px;">
+            <div class="cbs-meal-title" style="color:var(--blue); font-size:16px; font-weight:900;">🍽️ 석식 (저녁)</div>
             <div id="cbs-dinner-list" class="cbs-meal-list"></div>
           </div>
-        </div>
-        <div class="cbs-action">
-          <button class="btn-primary btn-apple-glass" id="btn-cbs-nutrition">
-            <span style="font-size:18px; margin-right:6px;">📊</span> 종합 영양 정밀 분석
-          </button>
+
+          <!-- INTEGRATED NUTRITION AREA ON SCROLL -->
+          <div class="cbs-nutrition-divider">
+            <span>📊 상세 영양 분석</span>
+          </div>
+          
+          <div class="cbs-nutrition-view">
+             <div class="cbs-radar-box">
+                <canvas id="cbs-radar" width="400" height="400" style="width:200px; height:200px;"></canvas>
+                <div class="cbs-radar-center">
+                   <strong id="cbs-kcal">0</strong>
+                   <span>kcal</span>
+                </div>
+             </div>
+             <div class="stat-grid" id="cbs-stat-grid" style="margin-top:20px;"></div>
+             <div class="insight-card cbs-insight">
+                <div class="insight-body">
+                   <strong>👨‍⚕️ 스마트 식사 코칭</strong>
+                   <p id="cbs-comment">정보를 불러오는 중...</p>
+                </div>
+             </div>
+          </div>
         </div>
       </div>
 
@@ -239,37 +279,6 @@
         <div id="feed-list" class="feed-list"></div>
       </section>
 
-      <!-- NUTRITION -->
-      <section class="page" id="page-nutrition">
-        <div class="nut-hero" style="margin-bottom:12px;">
-          <h2 style="font-weight:900; font-size:26px; margin-bottom:4px; letter-spacing:-0.5px;">스마트 영양 분석</h2>
-          <p class="sub-text" id="nut-date-text"></p>
-        </div>
-        
-        <!-- HEXAGON CHART AREA -->
-        <div class="insight-card" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 20px; text-align:center;">
-          <div style="position:relative; width: 220px; height: 220px;">
-             <!-- FALLBACK SUMMARY -->
-             <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:10; pointer-events:none;">
-                <strong style="font-size:28px; font-weight:900; display:block; letter-spacing:-1px;" id="nut-kcal">0</strong>
-                <span style="font-size:12px; color:var(--text-3); font-weight:700;">kcal</span>
-             </div>
-             <!-- RADAR CANVAS -->
-             <canvas id="nut-radar" width="440" height="440" style="width:100%; height:100%;"></canvas>
-          </div>
-        </div>
-
-        <div class="stat-grid" id="stat-grid" style="margin-top:-8px; margin-bottom: 24px;"></div>
-
-        <!-- SMART COACHING -->
-        <div class="insight-card" style="background: linear-gradient(145deg, #f0fdf4, #dcfce7); border:none; position:relative; overflow:hidden;">
-          <div style="position:absolute; right:-20px; bottom:-20px; font-size:120px; opacity:0.1; transform:rotate(-15deg);">🩺</div>
-          <div class="insight-body" style="position:relative; z-index:1;">
-            <strong style="color:#166534; display:block; margin-bottom:8px; font-size:15px; font-weight:800;">👨‍⚕️ 스마트 식사 가이드</strong>
-            <p id="nut-comment" style="color:#14532d; font-size:14px; line-height:1.6; font-weight:600;">급식 정보가 등록되면 AI가 맞춤형 섭취 가이드를 제공합니다.</p>
-          </div>
-        </div>
-      </section>
 
       <!-- ALLERGY -->
       <section class="page" id="page-allergy">
@@ -344,10 +353,6 @@
       <button class="nav-item" data-page="photo">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="15" rx="2"/><circle cx="12" cy="12.5" r="3.5"/><path d="M5 5l2-2h10l2 2"/></svg>
         <span>사진</span>
-      </button>
-      <button class="nav-item" data-page="nutrition">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-        <span>영양</span>
       </button>
       <button class="nav-item" data-page="allergy">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>

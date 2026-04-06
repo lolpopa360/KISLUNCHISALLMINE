@@ -19,7 +19,14 @@
   // ── Utils ──
   function todayStr() {
     var d = new Date();
+    // 저녁 8시(20시) 이후면 내일 날짜 반환
+    if (d.getHours() >= 20) {
+      d.setDate(d.getDate() + 1);
+    }
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function isTomorrowOnHome() {
+    return new Date().getHours() >= 20;
   }
   function todayLabel() {
     var d = new Date();
@@ -204,7 +211,7 @@
     setupNav();
     renderCalendar();
     renderFeed();
-    renderNutrition();
+    // 영양 분석은 홈 화면 초기화 시점에 함께 실행됨
     renderAllergy();
     setupUpload();
     initFeedDateNav();
@@ -217,9 +224,22 @@
 
   // ═══ HOME ═══
   function renderHome() {
-    var data = loadMeals(todayStr());
+    var dateStr = todayStr();
+    var data = loadMeals(dateStr);
     var grid = $('menu-grid');
     var empty = $('empty-state');
+    
+    // 타이틀 및 날짜 표시 업데이트
+    if (isTomorrowOnHome()) {
+      $('home-meal-title').textContent = '🌙 내일의 식단';
+      var d = new Date(); d.setDate(d.getDate() + 1);
+      var days = ['일','월','화','수','목','금','토'];
+      $('date-display').textContent = d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + days[d.getDay()] + '요일';
+    } else {
+      $('home-meal-title').textContent = '☀️ 오늘의 식단';
+      $('date-display').textContent = todayLabel();
+    }
+
     grid.innerHTML = '';
 
     if (!data) {
@@ -277,6 +297,9 @@
       })(m);
       grid.appendChild(card);
     }
+
+    // 홈 화면 하단에 영양 분석 렌더링
+    renderNutrition(dateStr, 'home');
   }
 
   // ═══ TABS ═══
@@ -288,7 +311,7 @@
         this.classList.add('active');
         currentMeal = this.getAttribute('data-meal');
         renderHome();
-        renderNutrition();
+        renderHome();
         renderAllergy();
       });
     }
@@ -521,14 +544,10 @@
            }
         }
         var div = document.createElement('div');
-        div.className = 'cbs-meal-item';
-        if(isDanger) { div.style.border = '1.5px solid var(--red)'; div.style.background = '#ffebee'; }
-        
-        // 이모지(m.emoji) 완전 제거 후 깔끔한 타이포그래피 유지
-        div.innerHTML = '<div style="width:6px; height:6px; background:var(--text); border-radius:50%; margin: 8px 12px 0 4px; flex-shrink:0;"></div>' + 
-                        '<div style="flex:1;">' + m.name + ' <span style="color:var(--text-3); font-size:12px; margin-left:6px;">' + (m.kcal||0) + 'kcal</span></div>' + 
-                        (isDanger ? '<span style="color:var(--red); font-size:13px; font-weight:800;">🚨 알레르기 위험</span>' : '');
-        div.style.alignItems = 'flex-start';
+        div.className = 'cbs-meal-item' + (isDanger ? ' cbs-danger' : '');
+        div.innerHTML = '<span>' + m.name + '</span>' + 
+                        '<span class="kcal">' + (m.kcal||0) + 'kcal</span>' + 
+                        (isDanger ? '<div class="cbs-danger-badge">🚨</div>' : '');
         targetUl.appendChild(div);
       });
     }
@@ -536,8 +555,14 @@
     makeMealItems(data ? data.lunch : [], lList);
     makeMealItems(data ? data.dinner : [], dList);
 
+    // 통합 영양 분석 렌더링 (메뉴 아래에 위치)
+    renderNutrition(dateStr, 'cbs');
+
     calSheetBackdrop.classList.add('show');
     calBottomSheet.classList.add('show');
+    // 스크롤 초기화
+    var content = calBottomSheet.querySelector('.cbs-content');
+    if (content) content.scrollTop = 0;
   }
 
   function closeCalSheet() {
@@ -560,13 +585,11 @@
       }, {passive:true});
   }
 
-  var currentNutritionDate = todayStr();
-
   var btnNutrition = $('btn-cbs-nutrition');
   if(btnNutrition) {
       btnNutrition.addEventListener('click', function() {
+        // 기존 버튼은 숨김 처리할 예정이지만 로직상 남겨둠
         closeCalSheet();
-        currentNutritionDate = cbsSelectedDate;
         goPage('nutrition');
       });
   }
@@ -647,21 +670,28 @@
     }
   }
 
-  // ═══ NUTRITION ═══
-  function renderNutrition() {
-    var dObj = new Date(currentNutritionDate);
+  // ═══ NUTRITION (Integrated) ═══
+  function renderNutrition(dateStr, containerPrefix) {
+    if (!$(containerPrefix + '-radar')) return;
+
+    var dObj = new Date(dateStr);
     var dayNames = ['일', '월', '화', '수', '목', '금', '토'];
     var lbl = (dObj.getMonth() + 1) + '월 ' + dObj.getDate() + '일 (' + dayNames[dObj.getDay()] + ')';
     
-    $('nut-date-text').textContent = lbl + ' ' + (currentMeal === 'lunch' ? '점심' : '저녁');
+    var dateEl = $(containerPrefix + '-date-text');
+    if (dateEl) dateEl.textContent = lbl + ' ' + (currentMeal === 'lunch' ? '점심' : '저녁');
 
-    var data = loadMeals(currentNutritionDate);
+    var data = loadMeals(dateStr);
     var menus = data ? (data[currentMeal] || []) : [];
 
     var totalKcal = 0;
     for (var i = 0; i < menus.length; i++) totalKcal += (menus[i].kcal || 0);
-    $('nut-kcal').textContent = totalKcal;
-    $('nut-cnt').textContent = menus.length;
+    
+    var kcalEl = $(containerPrefix + '-kcal');
+    if (kcalEl) kcalEl.textContent = totalKcal;
+    
+    var cntEl = $(containerPrefix + '-cnt');
+    if (cntEl) cntEl.textContent = menus.length;
 
     var protein = Math.round(totalKcal * 0.15 / 4);
     var fat = Math.round(totalKcal * 0.25 / 9);
@@ -675,29 +705,29 @@
     if (totalKcal === 0) {
       smartComments.push('급식 정보가 등록되지 않았습니다.');
     } else {
-      if (totalKcal > 1000) smartComments.push('오늘 식단은 전체 열량이 다소 높은 편입니다! 점심/저녁 한 끼에 너무 많은 양을 드시지 않도록 양 조절에 신경 써주시면 완벽할 거예요. 🏃‍♂️');
-      else if (totalKcal < 600) smartComments.push('전체 열량이 조금 가볍게 구성된 식단입니다. 활동량이 많은 날이라면 간식으로 단백질 바나 우유를 더 챙겨 드셔도 좋습니다. 🔋');
+      if (totalKcal > 1000) smartComments.push('오늘 식단은 열량이 다소 높습니다! 점심에 많이 드셨다면 저녁은 가볍게 드시는 게 좋겠네요. 🏃‍♂️');
+      else if (totalKcal < 600) smartComments.push('열량이 가벼운 식단입니다. 활동량이 많다면 견과류나 우유를 더 챙겨 드셔보세요. 🔋');
       
       if (menus.some(m => m.name.includes('돈까스') || m.name.includes('튀김') || m.name.includes('치킨'))) {
-        smartComments.push('오늘은 바삭한 튀김 메뉴가 포함되어 지방 비율이 높을 수 있어요. 국물을 조금 남기거나 야채를 먼저 드시는 것을 추천합니다! 🥗');
+        smartComments.push('바삭한 튀김 메뉴가 포함되어 지방이 높을 수 있어요. 식이섬유가 많은 나물/야채를 먼저 드시는 걸 추천해요! 🥗');
       } else if (menus.some(m => m.name.includes('샐러드') || m.name.includes('무침') || m.name.includes('나물'))) {
-        smartComments.push('건강한 채소 메뉴가 골고루 배합되어 식이섬유가 풍부합니다. 포만감이 오래가고 소화에 아주 좋은 식단이에요! ✨');
+        smartComments.push('채소 메뉴가 풍부해 식이섬유가 가득합니다. 포만감이 유지되고 소화에 아주 좋은 균형 잡힌 식단이에요! ✨');
       } else {
-         smartComments.push('전반적으로 영양소 분배가 적절히 들어간 균형 잡힌 식단입니다. 천천히 씹어 드시며 맛을 온전히 즐겨보세요! 🍽️');
+         smartComments.push('전반적으로 영양소 분배가 적절한 건강 식단입니다. 천천히 씹어 드시며 맛을 즐겨보세요! 🍽️');
       }
     }
-    $('nut-comment').textContent = smartComments[smartComments.length-1];
+    var commentEl = $(containerPrefix + '-comment');
+    if (commentEl) commentEl.textContent = smartComments[smartComments.length-1];
 
     // Radar Chart Logic (Hexagon)
-    var canvas = $('nut-radar');
-    if (!canvas) return;
+    var canvas = $(containerPrefix + '-radar');
     var ctx = canvas.getContext('2d');
     var w = canvas.width; var h = canvas.height;
     var cx = w / 2; var cy = h / 2;
-    var radius = 140;
+    var radius = containerPrefix === 'home' ? 100 : 140; // 홈에서는 조금 작게
 
     // Data Calculation (0.0 ~ 1.0)
-    var seed = currentNutritionDate.charCodeAt(currentNutritionDate.length-1) || 0;
+    var seed = dateStr.charCodeAt(dateStr.length-1) || 0;
     var rFloat = function(min, max, offset) { return min + ((seed + offset) % 100) / 100 * (max - min); };
     
     var dataVals = [
@@ -713,9 +743,9 @@
     var labels = ['탄수화물', '단백질', '지방', '나트륨', '비타민', '칼슘'];
 
     ctx.clearRect(0,0,w,h);
-    // Draw Web (Background)
+    // Draw Web
     ctx.lineWidth = 1;
-    ctx.strokeStyle = '#e2e8f0'; // Tailwind Slate-200
+    ctx.strokeStyle = '#e2e8f0';
     for (var level = 1; level <= 4; level++) {
        ctx.beginPath();
        for (var i = 0; i < 6; i++) {
@@ -727,22 +757,21 @@
        }
        ctx.closePath(); ctx.stroke();
     }
-    // Draw Axis lines & Labels
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = 'bold 24px -apple-system, system-ui, sans-serif';
+    // Draw Axis & Labels
+    ctx.font = (containerPrefix === 'home' ? 'bold 18px' : 'bold 24px') + ' -apple-system, sans-serif';
     for (var i = 0; i < 6; i++) {
         var angle = (Math.PI / 3) * i - Math.PI/2;
         var lx = cx + radius * Math.cos(angle);
         var ly = cy + radius * Math.sin(angle);
         ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(lx, ly); ctx.stroke();
         
-        ctx.fillStyle = '#64748b'; // Slate-500
-        var tx = cx + (radius + 40) * Math.cos(angle);
-        var ty = cy + (radius + 40) * Math.sin(angle);
-        ctx.fillText(labels[i], tx, ty);
+        ctx.fillStyle = '#94a3b8';
+        var labelDist = containerPrefix === 'home' ? 25 : 40;
+        var tx = cx + (radius + labelDist) * Math.cos(angle);
+        var ty = cy + (radius + labelDist) * Math.sin(angle);
+        ctx.textAlign = 'center'; ctx.fillText(labels[i], tx, ty);
     }
-
-    // Draw Data Area
+    // Area
     ctx.beginPath();
     for (var i = 0; i < 6; i++) {
         var angle = (Math.PI / 3) * i - Math.PI/2;
@@ -752,42 +781,29 @@
         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
     ctx.closePath();
-    ctx.fillStyle = 'rgba(16, 185, 129, 0.4)'; // Emerald-500 transparent
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.3)';
     ctx.fill();
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = '#10b981'; // Emerald-500
-    ctx.stroke();
+    ctx.lineWidth = 3; ctx.strokeStyle = '#10b981'; ctx.stroke();
 
-    // Draw Data Dots
-    for (var i = 0; i < 6; i++) {
-        var angle = (Math.PI / 3) * i - Math.PI/2;
-        var r = radius * dataVals[i];
-        var x = cx + r * Math.cos(angle);
-        var y = cy + r * Math.sin(angle);
-        ctx.beginPath();
-        ctx.arc(x, y, 7, 0, Math.PI*2);
-        ctx.fillStyle = '#fff'; ctx.fill();
-        ctx.lineWidth = 3; ctx.strokeStyle = '#10b981'; ctx.stroke();
+    // Stats Grid 렌더링
+    var statGrid = $(containerPrefix + '-stat-grid');
+    if (statGrid) {
+      statGrid.innerHTML = '';
+      var stats = [
+        { v: protein + 'g', l: '단백질', lo: false },
+        { v: fat + 'g', l: '지방', lo: fat > 25 },
+        { v: carbs + 'g', l: '탄수화물', lo: false },
+        { v: String(totalKcal), l: '칼로리', lo: false },
+        { v: String(allergyCount), l: '알레르기⚠', lo: allergyCount > 0 },
+        { v: String(menus.length), l: '메뉴 수', lo: false }
+      ];
+      for (var s = 0; s < stats.length; s++) {
+        var cell = document.createElement('div');
+        cell.className = 'stat-cell';
+        cell.innerHTML = '<div class="stat-val' + (stats[s].lo ? ' lo' : '') + '">' + stats[s].v + '</div><span class="stat-lbl">' + stats[s].l + '</span>';
+        statGrid.appendChild(cell);
+      }
     }
-
-    // Stats
-    var statGrid = $('stat-grid');
-    statGrid.innerHTML = '';
-    var stats = [
-      { v: protein + 'g', l: '단백질', lo: false },
-      { v: fat + 'g', l: '지방', lo: fat > 25 },
-      { v: carbs + 'g', l: '탄수화물', lo: false },
-      { v: String(totalKcal), l: '칼로리', lo: false },
-      { v: String(allergyCount), l: '알레르기⚠', lo: allergyCount > 0 },
-      { v: String(menus.length), l: '메뉴 수', lo: false }
-    ];
-    for (var s = 0; s < stats.length; s++) {
-      var cell = document.createElement('div');
-      cell.className = 'stat-cell';
-      cell.innerHTML = '<div class="stat-val' + (stats[s].lo ? ' lo' : '') + '">' + stats[s].v + '</div><span class="stat-lbl">' + stats[s].l + '</span>';
-      statGrid.appendChild(cell);
-    }
-    // Bars replaced by Hexagon Chart
   }
 
   // ═══ ALLERGY ═══
