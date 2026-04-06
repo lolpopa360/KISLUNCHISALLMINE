@@ -241,28 +241,33 @@
 
       <!-- NUTRITION -->
       <section class="page" id="page-nutrition">
-        <div class="nut-hero">
-          <h2>영양 분석</h2>
+        <div class="nut-hero" style="margin-bottom:12px;">
+          <h2 style="font-weight:900; font-size:26px; margin-bottom:4px; letter-spacing:-0.5px;">스마트 영양 분석</h2>
           <p class="sub-text" id="nut-date-text"></p>
-          <div class="nut-numbers">
-            <div class="nut-num-item"><strong id="nut-kcal">0</strong><small>kcal</small><span>총 열량</span></div>
-            <div class="nut-num-item"><strong id="nut-cnt">0</strong><small>가지</small><span>메뉴 수</span></div>
+        </div>
+        
+        <!-- HEXAGON CHART AREA -->
+        <div class="insight-card" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 20px; text-align:center;">
+          <div style="position:relative; width: 220px; height: 220px;">
+             <!-- FALLBACK SUMMARY -->
+             <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:10; pointer-events:none;">
+                <strong style="font-size:28px; font-weight:900; display:block; letter-spacing:-1px;" id="nut-kcal">0</strong>
+                <span style="font-size:12px; color:var(--text-3); font-weight:700;">kcal</span>
+             </div>
+             <!-- RADAR CANVAS -->
+             <canvas id="nut-radar" width="440" height="440" style="width:100%; height:100%;"></canvas>
           </div>
         </div>
-        <div class="insight-card">
-          <div class="insight-mascot">
-            <img src="assets/mascot.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" style="width:40px">
-            <span style="display:none;font-size:28px">🍱</span>
+
+        <div class="stat-grid" id="stat-grid" style="margin-top:-8px; margin-bottom: 24px;"></div>
+
+        <!-- SMART COACHING -->
+        <div class="insight-card" style="background: linear-gradient(145deg, #f0fdf4, #dcfce7); border:none; position:relative; overflow:hidden;">
+          <div style="position:absolute; right:-20px; bottom:-20px; font-size:120px; opacity:0.1; transform:rotate(-15deg);">🩺</div>
+          <div class="insight-body" style="position:relative; z-index:1;">
+            <strong style="color:#166534; display:block; margin-bottom:8px; font-size:15px; font-weight:800;">👨‍⚕️ 스마트 식사 가이드</strong>
+            <p id="nut-comment" style="color:#14532d; font-size:14px; line-height:1.6; font-weight:600;">급식 정보가 등록되면 AI가 맞춤형 섭취 가이드를 제공합니다.</p>
           </div>
-          <div class="insight-body">
-            <strong>오늘의 영양 코멘트</strong>
-            <p id="nut-comment">급식 정보가 등록되면 분석해드려요!</p>
-          </div>
-        </div>
-        <div class="stat-grid" id="stat-grid"></div>
-        <div class="section-card">
-          <h4 class="section-label" style="padding:14px 16px 0">영양소 비율</h4>
-          <div id="nut-bars" style="padding:12px 16px 16px"></div>
         </div>
       </section>
 

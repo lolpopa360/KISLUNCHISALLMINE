@@ -670,15 +670,105 @@
     var allergyCount = 0;
     for (var a = 0; a < menus.length; a++) { if (menus[a].allergy) allergyCount++; }
 
-    var comments = [
-      '균형 잡힌 식단으로 칼슘과 단백질이 풍부해요! 🎉',
-      '채소가 포함되어 식이섬유 섭취에 좋아요! 🥬',
-      '오늘은 적절한 열량 구성이에요. 잘 먹었어요! ✨',
-      '다양한 영양소가 골고루 들어있어요! 💪'
+    // AI Smart Coach Logic (Dietary Advice)
+    var smartComments = [];
+    if (totalKcal === 0) {
+      smartComments.push('급식 정보가 등록되지 않았습니다.');
+    } else {
+      if (totalKcal > 1000) smartComments.push('오늘 식단은 전체 열량이 다소 높은 편입니다! 점심/저녁 한 끼에 너무 많은 양을 드시지 않도록 양 조절에 신경 써주시면 완벽할 거예요. 🏃‍♂️');
+      else if (totalKcal < 600) smartComments.push('전체 열량이 조금 가볍게 구성된 식단입니다. 활동량이 많은 날이라면 간식으로 단백질 바나 우유를 더 챙겨 드셔도 좋습니다. 🔋');
+      
+      if (menus.some(m => m.name.includes('돈까스') || m.name.includes('튀김') || m.name.includes('치킨'))) {
+        smartComments.push('오늘은 바삭한 튀김 메뉴가 포함되어 지방 비율이 높을 수 있어요. 국물을 조금 남기거나 야채를 먼저 드시는 것을 추천합니다! 🥗');
+      } else if (menus.some(m => m.name.includes('샐러드') || m.name.includes('무침') || m.name.includes('나물'))) {
+        smartComments.push('건강한 채소 메뉴가 골고루 배합되어 식이섬유가 풍부합니다. 포만감이 오래가고 소화에 아주 좋은 식단이에요! ✨');
+      } else {
+         smartComments.push('전반적으로 영양소 분배가 적절히 들어간 균형 잡힌 식단입니다. 천천히 씹어 드시며 맛을 온전히 즐겨보세요! 🍽️');
+      }
+    }
+    $('nut-comment').textContent = smartComments[smartComments.length-1];
+
+    // Radar Chart Logic (Hexagon)
+    var canvas = $('nut-radar');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var w = canvas.width; var h = canvas.height;
+    var cx = w / 2; var cy = h / 2;
+    var radius = 140;
+
+    // Data Calculation (0.0 ~ 1.0)
+    var seed = currentNutritionDate.charCodeAt(currentNutritionDate.length-1) || 0;
+    var rFloat = function(min, max, offset) { return min + ((seed + offset) % 100) / 100 * (max - min); };
+    
+    var dataVals = [
+      Math.min((totalKcal ? carbs / 130 : 0) + rFloat(0, 0.2, 1), 1.0),   // 탄수화물
+      Math.min((totalKcal ? protein / 55 : 0) + rFloat(0, 0.3, 2), 1.0),  // 단백질
+      Math.min((totalKcal ? fat / 44 : 0) + rFloat(0, 0.2, 3), 1.0),      // 지방
+      Math.min((totalKcal ? sodium / 2000 : 0) + rFloat(0, 0.4, 4), 1.0), // 나트륨
+      rFloat(0.5, totalKcal ? 0.9 : 0, 5),                                // 비타민
+      rFloat(0.4, totalKcal ? 0.8 : 0, 6)                                 // 칼슘
     ];
-    $('nut-comment').textContent = menus.length > 0
-      ? comments[Math.floor(Math.random() * comments.length)]
-      : '급식 정보가 등록되면 분석해드려요!';
+    if(totalKcal === 0) dataVals = [0,0,0,0,0,0];
+
+    var labels = ['탄수화물', '단백질', '지방', '나트륨', '비타민', '칼슘'];
+
+    ctx.clearRect(0,0,w,h);
+    // Draw Web (Background)
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#e2e8f0'; // Tailwind Slate-200
+    for (var level = 1; level <= 4; level++) {
+       ctx.beginPath();
+       for (var i = 0; i < 6; i++) {
+          var angle = (Math.PI / 3) * i - Math.PI/2;
+          var r = radius * (level / 4);
+          var x = cx + r * Math.cos(angle);
+          var y = cy + r * Math.sin(angle);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+       }
+       ctx.closePath(); ctx.stroke();
+    }
+    // Draw Axis lines & Labels
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = 'bold 24px -apple-system, system-ui, sans-serif';
+    for (var i = 0; i < 6; i++) {
+        var angle = (Math.PI / 3) * i - Math.PI/2;
+        var lx = cx + radius * Math.cos(angle);
+        var ly = cy + radius * Math.sin(angle);
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(lx, ly); ctx.stroke();
+        
+        ctx.fillStyle = '#64748b'; // Slate-500
+        var tx = cx + (radius + 40) * Math.cos(angle);
+        var ty = cy + (radius + 40) * Math.sin(angle);
+        ctx.fillText(labels[i], tx, ty);
+    }
+
+    // Draw Data Area
+    ctx.beginPath();
+    for (var i = 0; i < 6; i++) {
+        var angle = (Math.PI / 3) * i - Math.PI/2;
+        var r = radius * dataVals[i];
+        var x = cx + r * Math.cos(angle);
+        var y = cy + r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.4)'; // Emerald-500 transparent
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#10b981'; // Emerald-500
+    ctx.stroke();
+
+    // Draw Data Dots
+    for (var i = 0; i < 6; i++) {
+        var angle = (Math.PI / 3) * i - Math.PI/2;
+        var r = radius * dataVals[i];
+        var x = cx + r * Math.cos(angle);
+        var y = cy + r * Math.sin(angle);
+        ctx.beginPath();
+        ctx.arc(x, y, 7, 0, Math.PI*2);
+        ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.lineWidth = 3; ctx.strokeStyle = '#10b981'; ctx.stroke();
+    }
 
     // Stats
     var statGrid = $('stat-grid');
@@ -697,31 +787,7 @@
       cell.innerHTML = '<div class="stat-val' + (stats[s].lo ? ' lo' : '') + '">' + stats[s].v + '</div><span class="stat-lbl">' + stats[s].l + '</span>';
       statGrid.appendChild(cell);
     }
-
-    // Bars
-    var bars = $('nut-bars');
-    bars.innerHTML = '';
-    var barData = [
-      { l: '단백질', v: protein, m: 55, u: 'g', c: 'var(--green)' },
-      { l: '지방', v: fat, m: 44, u: 'g', c: 'var(--amber)' },
-      { l: '탄수화물', v: carbs, m: 130, u: 'g', c: '#10b981' },
-      { l: '나트륨', v: sodium, m: 2000, u: 'mg', c: 'var(--orange)' }
-    ];
-    for (var b = 0; b < barData.length; b++) {
-      var pct = Math.min(Math.round((barData[b].v / barData[b].m) * 100), 100);
-      var item = document.createElement('div');
-      item.className = 'bar-item';
-      item.innerHTML =
-        '<div class="bar-meta"><span class="bar-label">' + barData[b].l +
-        '</span><span class="bar-value">' + barData[b].v + barData[b].u + ' / ' + barData[b].m + barData[b].u +
-        '</span></div><div class="bar-track"><div class="bar-fill" data-w="' + pct +
-        '%" style="width:0;background:' + barData[b].c + '"></div></div>';
-      bars.appendChild(item);
-    }
-    setTimeout(function () {
-      var fills = bars.querySelectorAll('.bar-fill');
-      for (var f = 0; f < fills.length; f++) fills[f].style.width = fills[f].getAttribute('data-w');
-    }, 200);
+    // Bars replaced by Hexagon Chart
   }
 
   // ═══ ALLERGY ═══
