@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <title>급식뭐지</title>
   <meta name="description" content="우리 학교 급식을 한눈에! 메뉴, 영양, 알레르기 정보를 확인하세요.">
-  <meta name="theme-color" content="#16a34a">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#f59e0b">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -128,7 +126,7 @@
           <p class="welcome-hi" id="welcome-text">안녕하세요!</p>
           <div style="display:flex; justify-content:space-between; align-items:baseline;">
             <h2 id="date-display">오늘 급식</h2>
-            <span id="home-meal-title" style="font-size:14px; font-weight:600; color:var(--green); background:rgba(22,163,74,0.1); padding:4px 10px; border-radius:12px;">☀️ 오늘의 식단</span>
+            <span id="home-meal-title" style="font-size:14px; font-weight:600; color:var(--primary-dark); background:var(--primary-soft); padding:4px 10px; border-radius:12px;">☀️ 오늘의 식단</span>
           </div>
         </div>
         <div class="tab-bar">
@@ -145,35 +143,24 @@
           <p>아직 등록된 급식 정보가 없어요</p>
           <small>관리자가 급식을 등록하면 여기에 나타나요</small>
         </div>
-        <!-- HOME INSIGHT (Integrated Nutrition) -->
-        <div class="insight-card home-insight" id="home-insight" style="flex-direction:column; padding:20px;">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%; margin-bottom:12px;">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <div class="insight-icon">👨‍⚕️</div>
-              <div class="insight-body">
-                 <h4 style="margin:0; font-weight:800; font-size:15px; color:var(--text); letter-spacing:-0.4px;">스마트 영양 분석</h4>
-              </div>
+        <!-- HOME NUTRITION (Simple) -->
+        <div class="tip-card home-tip" id="home-tip">
+          <div class="tip-header">
+            <div class="tip-title-row">
+              <span class="tip-icon-sm">🍽️</span>
+              <h4 class="tip-title">오늘의 영양</h4>
             </div>
-            <!-- MEAL TOGGLE CAPSULE -->
-            <div class="insight-toggle">
+            <div class="tip-toggle">
               <button class="toggle-btn active" data-meal="lunch" id="home-toggle-lunch">점심</button>
               <button class="toggle-btn" data-meal="dinner" id="home-toggle-dinner">저녁</button>
             </div>
           </div>
-
-          <p id="home-comment" style="font-size:13px; line-height:1.5; color:var(--text-2); font-weight:600; margin-bottom:16px;">데이터를 분석하고 있습니다...</p>
-          
-          <!-- HOME RADAR AREA -->
-          <div style="width:100%; border-top:1px dashed #d1fae5; padding-top:20px; display:flex; flex-direction:column; align-items:center;">
-             <div class="cbs-radar-box" style="transform:scale(0.85); margin-top:-10px;">
-                <canvas id="home-radar" width="400" height="400" style="width:200px; height:200px;"></canvas>
-                <div class="cbs-radar-center">
-                   <strong id="home-kcal">0</strong>
-                   <span>kcal</span>
-                </div>
-             </div>
-             <div class="stat-grid" id="home-stat-grid" style="width:100%; margin-top:0px;"></div>
+          <div class="home-kcal-display">
+            <strong id="home-kcal">0</strong>
+            <span>kcal</span>
           </div>
+          <div class="home-macro-bars" id="home-macro-bars"></div>
+          <p id="home-comment" class="home-tip-text">영양 정보를 불러오는 중...</p>
         </div>
 
         <div class="section-card" id="photo-teaser">
@@ -246,46 +233,23 @@
             <div id="cbs-dinner-list" class="cbs-meal-list"></div>
           </div>
 
-          <!-- INTEGRATED NUTRITION AREA (LUNCH) -->
+          <!-- NUTRITION (Single toggled section) -->
           <div class="cbs-nutrition-divider">
-            <span>🥗 중식 정밀 분석</span>
+            <span>🍽️ 영양 정보</span>
           </div>
-          <div class="cbs-nutrition-view">
-             <div class="cbs-radar-box">
-                <canvas id="cbs-lunch-radar" width="400" height="400" style="width:200px; height:200px;"></canvas>
-                <div class="cbs-radar-center">
-                   <strong id="cbs-lunch-kcal">0</strong>
-                   <span>kcal</span>
-                </div>
-             </div>
-             <div class="stat-grid" id="cbs-lunch-stat-grid" style="margin-top:20px;"></div>
-             <div class="insight-card cbs-insight">
-                <div class="insight-body">
-                   <strong>👨‍⚕️ 중식 스마트 가이드</strong>
-                   <p id="cbs-lunch-comment">정보를 불러오는 중...</p>
-                </div>
-             </div>
-          </div>
-
-          <!-- INTEGRATED NUTRITION AREA (DINNER) -->
-          <div class="cbs-nutrition-divider">
-            <span>🌙 석식 정밀 분석</span>
-          </div>
-          <div class="cbs-nutrition-view">
-             <div class="cbs-radar-box">
-                <canvas id="cbs-dinner-radar" width="400" height="400" style="width:200px; height:200px;"></canvas>
-                <div class="cbs-radar-center">
-                   <strong id="cbs-dinner-kcal">0</strong>
-                   <span>kcal</span>
-                </div>
-             </div>
-             <div class="stat-grid" id="cbs-dinner-stat-grid" style="margin-top:20px;"></div>
-             <div class="insight-card cbs-insight">
-                <div class="insight-body">
-                   <strong>👨‍⚕️ 석식 스마트 가이드</strong>
-                   <p id="cbs-dinner-comment">정보를 불러오는 중...</p>
-                </div>
-             </div>
+          <div class="cbs-nutrition-section">
+            <div class="tip-toggle cbs-meal-toggle">
+              <button class="toggle-btn active" id="cbs-toggle-lunch">점심</button>
+              <button class="toggle-btn" id="cbs-toggle-dinner">저녁</button>
+            </div>
+            <div class="cbs-kcal-row">
+              <strong id="cbs-kcal">0</strong>
+              <span>kcal</span>
+            </div>
+            <div class="cbs-macro-bars" id="cbs-macro-bars"></div>
+            <div class="cbs-tip-card">
+              <p id="cbs-comment">정보를 불러오는 중...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -297,9 +261,9 @@
           <p class="sub-text">날짜별 급식 사진 기록</p>
         </div>
         <div class="date-nav" style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px;">
-          <button id="feed-prev" style="background:var(--green);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;">‹</button>
+          <button id="feed-prev" style="background:var(--primary);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;">‹</button>
           <input type="date" id="feed-date" style="font-size:15px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font-family:inherit;">
-          <button id="feed-next" style="background:var(--green);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;">›</button>
+          <button id="feed-next" style="background:var(--primary);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;">›</button>
         </div>
         <div id="feed-list" class="feed-list"></div>
       </section>
@@ -399,7 +363,7 @@
       </div>
       <div class="modal-body">
         <div class="upload-drop" id="upload-drop">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.6"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.6"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           <p>사진을 선택하세요</p>
           <small>JPG, PNG · 최대 10MB</small>
         </div>

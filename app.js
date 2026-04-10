@@ -230,11 +230,11 @@
     if (htl && htd) {
       htl.addEventListener('click', function() {
         htl.classList.add('active'); htd.classList.remove('active');
-        renderNutrition(todayStr(), 'home', 'lunch');
+        renderHomeNutrition(todayStr(), 'lunch');
       });
       htd.addEventListener('click', function() {
         htd.classList.add('active'); htl.classList.remove('active');
-        renderNutrition(todayStr(), 'home', 'dinner');
+        renderHomeNutrition(todayStr(), 'dinner');
       });
     }
 
@@ -321,8 +321,8 @@
       grid.appendChild(card);
     }
 
-    // 홈 화면 영양 분석 렌더링 (현재 선택된 메인 탭 기준 우선)
-    renderNutrition(dateStr, 'home', currentMeal);
+    // 홈 화면 영양 렌더링 (간소화)
+    renderHomeNutrition(dateStr, currentMeal);
   }
 
   // ═══ TABS ═══
@@ -588,15 +588,61 @@
     makeMealItems(data ? data.lunch : [], lList);
     makeMealItems(data ? data.dinner : [], dList);
 
-    // 통합 영양 분석 렌더링 (중식/석식 각각)
-    renderNutrition(dateStr, 'cbs-lunch', 'lunch');
-    renderNutrition(dateStr, 'cbs-dinner', 'dinner');
+    // 영양 정보 렌더링 (기본: 점심)
+    renderSheetNutrition(dateStr, 'lunch');
+
+    // 토글 버튼 이벤트
+    var cbsToggleLunch = $('cbs-toggle-lunch');
+    var cbsToggleDinner = $('cbs-toggle-dinner');
+    if (cbsToggleLunch && cbsToggleDinner) {
+      cbsToggleLunch.onclick = function() {
+        cbsToggleLunch.classList.add('active'); cbsToggleDinner.classList.remove('active');
+        renderSheetNutrition(cbsSelectedDate, 'lunch');
+      };
+      cbsToggleDinner.onclick = function() {
+        cbsToggleDinner.classList.add('active'); cbsToggleLunch.classList.remove('active');
+        renderSheetNutrition(cbsSelectedDate, 'dinner');
+      };
+      // 리셋 토글 상태
+      cbsToggleLunch.classList.add('active');
+      cbsToggleDinner.classList.remove('active');
+    }
 
     calSheetBackdrop.classList.add('show');
     calBottomSheet.classList.add('show');
-    // 스크롤 초기화
     var content = calBottomSheet.querySelector('.cbs-content');
     if (content) content.scrollTop = 0;
+  }
+
+  function renderSheetNutrition(dateStr, mealType) {
+    var data = loadMeals(dateStr);
+    var menus = data ? (data[mealType] || []) : [];
+
+    var totalKcal = 0, p = 0, f = 0, c = 0;
+    menus.forEach(m => {
+      totalKcal += (m.kcal || 0);
+      p += (m.p || 0);
+      f += (m.f || 0);
+      c += (m.c || 0);
+    });
+
+    var kcalEl = $('cbs-kcal');
+    if (kcalEl) kcalEl.textContent = totalKcal;
+
+    var commentEl = $('cbs-comment');
+    if (commentEl) commentEl.textContent = getMealTip(menus);
+
+    var barsEl = $('cbs-macro-bars');
+    if (barsEl) {
+      var protein = p || Math.round(totalKcal * 0.12 / 4);
+      var fat = f || Math.round(totalKcal * 0.3 / 9);
+      var carbs = c || Math.round(totalKcal * 0.58 / 4);
+
+      barsEl.innerHTML =
+        makeSimpleBar('탄수화물', carbs, 130, 'g', '#f59e0b') +
+        makeSimpleBar('단백질', protein, 55, 'g', '#65a30d') +
+        makeSimpleBar('지방', fat, 44, 'g', fat > 30 ? '#ef4444' : '#78716c');
+    }
   }
 
   function closeCalSheet() {
@@ -697,31 +743,69 @@
     }
   }
 
-  // ═══ NUTRITION (Integrated) ═══
-  function generateCoachAdvice(menus) {
-    if (!menus || menus.length === 0) return "급식 정보가 등록되지 않았습니다.";
-    
+  // ═══ HOME NUTRITION (Simple) ═══
+  function renderHomeNutrition(dateStr, mealType) {
+    var data = loadMeals(dateStr);
+    var menus = data ? (data[mealType] || []) : [];
+
+    var totalKcal = 0, p = 0, f = 0, c = 0;
+    menus.forEach(m => {
+      totalKcal += (m.kcal || 0);
+      p += (m.p || 0);
+      f += (m.f || 0);
+      c += (m.c || 0);
+    });
+
+    var kcalEl = $('home-kcal');
+    if (kcalEl) kcalEl.textContent = totalKcal;
+
+    var commentEl = $('home-comment');
+    if (commentEl) commentEl.textContent = getMealTip(menus);
+
+    var barsEl = $('home-macro-bars');
+    if (barsEl) {
+      var protein = p || Math.round(totalKcal * 0.12 / 4);
+      var fat = f || Math.round(totalKcal * 0.3 / 9);
+      var carbs = c || Math.round(totalKcal * 0.58 / 4);
+
+      barsEl.innerHTML =
+        makeSimpleBar('탄수화물', carbs, 130, 'g', '#f59e0b') +
+        makeSimpleBar('단백질', protein, 55, 'g', '#65a30d') +
+        makeSimpleBar('지방', fat, 44, 'g', fat > 30 ? '#ef4444' : '#78716c');
+    }
+  }
+
+  function makeSimpleBar(label, val, max, unit, color) {
+    var pct = Math.min(Math.round((val / max) * 100), 100);
+    return '<div class="simple-bar">' +
+      '<div class="simple-bar-head"><span>' + label + '</span><span class="simple-bar-val">' + val + unit + '</span></div>' +
+      '<div class="simple-bar-track"><div class="simple-bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div></div>';
+  }
+
+  // ═══ NUTRITION (Detailed — Calendar) ═══
+  function getMealTip(menus) {
+    if (!menus || menus.length === 0) return "급식 정보가 아직 등록되지 않았어요.";
+
     var kcal = menus.reduce((acc, m) => acc + (m.kcal || 0), 0);
-    var advice = [];
+    var tips = [];
     var names = menus.map(m => m.name).join(' ');
 
-    // 카테고리 분석
     var hasMeats = /고기|불고기|닭|돈육|스테이크|햄|너겟|까스|살|Beef|Chicken|Pork/.test(names);
     var hasGreens = /샐러드|나물|무침|쌈|야채|채소|겉절이|Salad/.test(names);
     var hasFried = /튀김|까스|칩|치킨|강정|Fried/.test(names);
     var hasSodium = /국|개|탕|찌개|볶음|조림|Soup|Stew/.test(names);
 
-    if (kcal > 950) advice.push("열량이 꽤 높아요! 밥양을 조금 조절하고 많이 움직여볼까요? 🏃‍♂️");
-    else if (kcal < 550) advice.push("오늘은 아주 가벼운 식단이네요. 견과류나 우유를 더 챙겨 드셔도 좋겠어요! 🔋");
+    if (kcal > 950) tips.push("오늘은 든든한 식단! 밥을 조금 줄이면 딱 좋아요 🏃‍♂️");
+    else if (kcal < 550) tips.push("가벼운 식단이에요~ 간식으로 우유나 견과류 챙겨요! 🥛");
 
-    if (hasFried) advice.push("바삭한 튀김 메뉴가 있어요. 지방 함량이 높을 수 있으니 나물을 먼저 드셔보세요! 🥗");
-    if (!hasGreens) advice.push("오늘 식단에는 채소가 부족해 보여요. 비타민 보충을 위해 과일을 챙겨 드세요! 🍎");
-    if (hasMeats && hasGreens) advice.push("고기와 채소의 조화가 훌륭해요! 근육도 만들고 소화도 잘 되는 100점 식단입니다. ✨");
-    if (hasSodium && !hasGreens) advice.push("국물이 있는 메뉴는 나트륨이 높으니 국물보다는 건더기 위주로 드시는 걸 추천해요! 💧");
-    
-    if (advice.length === 0) advice.push("영양소가 골고루 갖춰진 균형 잡힌 식단입니다. 맛있게 즐기세요! 🍽️");
-    
-    return advice[advice.length - 1];
+    if (hasFried) tips.push("바삭한 튀김이 있네요! 나물 먼저 먹으면 속이 편해요 🥗");
+    if (!hasGreens) tips.push("채소가 좀 아쉬운 날, 간식으로 과일 어때요? 🍎");
+    if (hasMeats && hasGreens) tips.push("고기랑 채소가 딱 좋은 조합! 맛있게 먹어요 ✨");
+    if (hasSodium && !hasGreens) tips.push("국물은 건더기 위주로 먹으면 나트륨 걱정 끝! 💧");
+
+    if (tips.length === 0) tips.push("골고루 갖춰진 좋은 식단이에요, 맛있게 드세요! 🍽️");
+
+    return tips[tips.length - 1];
   }
 
   function renderNutrition(dateStr, containerPrefix, mealType) {
@@ -744,7 +828,7 @@
     if (kcalEl) kcalEl.textContent = totalKcal;
     
     var commentEl = $(containerPrefix + '-comment');
-    if (commentEl) commentEl.textContent = generateCoachAdvice(menus);
+    if (commentEl) commentEl.textContent = getMealTip(menus);
 
     // Radar Chart Logic
     var canvas = radarEl;
@@ -800,7 +884,7 @@
 
     // Labels
     ctx.fillStyle = (document.documentElement.classList.contains('dark') || window.matchMedia('(prefers-color-scheme: dark)').matches) ? '#cbd5e1' : '#64748b';
-    ctx.font = '700 12px Inter';
+    ctx.font = '700 12px Pretendard, sans-serif';
     ctx.textAlign = 'center';
     for (var i = 0; i < 6; i++) {
       var angle = (Math.PI * 2 / 6) * i - Math.PI / 2;
