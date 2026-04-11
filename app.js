@@ -285,6 +285,14 @@
       });
     }
 
+    // Show edit button for admins
+    if (currentUser && currentUser.role === 'admin' && $('nut-edit-btn')) {
+      $('nut-edit-btn').style.display = '';
+    }
+
+    // Nutrition inline edit
+    setupNutritionEdit();
+
     var gp = $('goto-photo');
     if (gp) gp.addEventListener('click', function () { goPage('photo'); });
 
@@ -863,14 +871,25 @@
     var data = loadMeals(dateStr);
     var menus = data ? (data[mealType] || []) : [];
 
+    // Check for nutrition override (영양사 직접 입력)
+    var nutOverride = data ? data[mealType + '_nutrition'] : null;
+
     var totalKcal = 0, p = 0, f = 0, c = 0, na = 0;
-    menus.forEach(function(m) {
-      totalKcal += (m.kcal || 0);
-      p += (m.p || 0);
-      f += (m.f || 0);
-      c += (m.c || 0);
-      na += (m.na || 0);
-    });
+    if (nutOverride && (nutOverride.kcal || nutOverride.p || nutOverride.c)) {
+      totalKcal = nutOverride.kcal || 0;
+      p = nutOverride.p || 0;
+      f = nutOverride.f || 0;
+      c = nutOverride.c || 0;
+      na = nutOverride.na || 0;
+    } else {
+      menus.forEach(function(m) {
+        totalKcal += (m.kcal || 0);
+        p += (m.p || 0);
+        f += (m.f || 0);
+        c += (m.c || 0);
+        na += (m.na || 0);
+      });
+    }
 
     var kcalEl = $('home-kcal');
     if (kcalEl) kcalEl.textContent = totalKcal;
@@ -991,6 +1010,95 @@
       var ly = cy + r * Math.sin(angle);
       ctx.fillText(labels[i], lx, ly + 4);
     }
+  }
+
+  // ═══ NUTRITION INLINE EDIT (Admin) ═══
+  function setupNutritionEdit() {
+    var editBtn = $('nut-edit-btn');
+    var viewMode = $('nut-view-mode');
+    var editMode = $('nut-edit-mode');
+    var cancelBtn = $('nut-cancel');
+    var saveBtn = $('nut-save');
+    if (!editBtn || !viewMode || !editMode) return;
+
+    editBtn.addEventListener('click', function() {
+      // Populate fields with current values
+      var dateStr = todayStr();
+      var mealType = $('home-toggle-lunch').classList.contains('active') ? 'lunch' : 'dinner';
+      var data = loadMeals(dateStr);
+      var nut = data ? data[mealType + '_nutrition'] : null;
+
+      if (nut) {
+        $('nut-e-kcal').value = nut.kcal || '';
+        $('nut-e-p').value = nut.p || '';
+        $('nut-e-f').value = nut.f || '';
+        $('nut-e-c').value = nut.c || '';
+        $('nut-e-na').value = nut.na || '';
+      } else {
+        // Sum from menu items as default
+        var menus = data ? (data[mealType] || []) : [];
+        var totals = { kcal: 0, p: 0, f: 0, c: 0, na: 0 };
+        menus.forEach(function(m) {
+          totals.kcal += (m.kcal || 0);
+          totals.p += (m.p || 0);
+          totals.f += (m.f || 0);
+          totals.c += (m.c || 0);
+          totals.na += (m.na || 0);
+        });
+        $('nut-e-kcal').value = totals.kcal || '';
+        $('nut-e-p').value = totals.p || '';
+        $('nut-e-f').value = totals.f || '';
+        $('nut-e-c').value = totals.c || '';
+        $('nut-e-na').value = totals.na || '';
+      }
+
+      viewMode.style.display = 'none';
+      editMode.style.display = '';
+    });
+
+    cancelBtn.addEventListener('click', function() {
+      editMode.style.display = 'none';
+      viewMode.style.display = '';
+    });
+
+    saveBtn.addEventListener('click', async function() {
+      var dateStr = todayStr();
+      var mealType = $('home-toggle-lunch').classList.contains('active') ? 'lunch' : 'dinner';
+      var nutData = {
+        kcal: parseFloat($('nut-e-kcal').value) || 0,
+        p: parseFloat($('nut-e-p').value) || 0,
+        f: parseFloat($('nut-e-f').value) || 0,
+        c: parseFloat($('nut-e-c').value) || 0,
+        na: parseFloat($('nut-e-na').value) || 0
+      };
+
+      // Update local cache
+      if (!cachedMeals[dateStr]) cachedMeals[dateStr] = {};
+      cachedMeals[dateStr][mealType + '_nutrition'] = nutData;
+
+      // Save to API
+      saveBtn.textContent = '저장 중...';
+      try {
+        var res = await fetch('/api/meals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cachedMeals)
+        });
+        if (res.ok) {
+          toast('✅ 영양 정보가 저장되었습니다!');
+        } else {
+          toast('❌ 저장에 실패했습니다');
+        }
+      } catch(e) {
+        toast('❌ 서버 연결 오류');
+      }
+      saveBtn.textContent = '💾 저장';
+
+      // Switch back to view mode and re-render
+      editMode.style.display = 'none';
+      viewMode.style.display = '';
+      renderHomeNutrition(dateStr, mealType);
+    });
   }
 
   function makeSimpleBar(label, val, max, unit, color) {

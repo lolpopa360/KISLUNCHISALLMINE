@@ -1045,6 +1045,69 @@ input, select { font-family: inherit; }
 }
 .home-radar-wrap canvas { display: block; max-width: 100%; }
 
+/* ═══ NUTRITION INLINE EDIT ═══ */
+.nut-edit-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.nut-edit-btn:active { background: var(--primary-soft); border-color: var(--primary); }
+
+.nut-edit-form {
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 4px 0;
+}
+.nut-edit-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.nut-edit-row label {
+  font-size: 14px; font-weight: 700; color: var(--text-2);
+  min-width: 60px;
+}
+.nut-input-wrap {
+  display: flex; align-items: center; gap: 6px;
+  flex: 1; max-width: 180px;
+}
+.nut-input-wrap input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  font-size: 16px; font-weight: 700;
+  color: var(--text);
+  text-align: right;
+  -moz-appearance: textfield;
+}
+.nut-input-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.nut-input-wrap input:focus { border-color: var(--primary); outline: none; }
+.nut-input-wrap span {
+  font-size: 13px; font-weight: 600; color: var(--text-3);
+  min-width: 24px;
+}
+.nut-edit-actions {
+  display: flex; gap: 10px; margin-top: 4px;
+}
+.nut-cancel-btn {
+  flex: 1; padding: 12px; border-radius: 10px;
+  border: 1.5px solid var(--border); background: var(--bg);
+  font-size: 14px; font-weight: 700; color: var(--text-2);
+  cursor: pointer;
+}
+.nut-save-btn {
+  flex: 2; padding: 12px; border-radius: 10px;
+  border: none; background: var(--primary); color: #fff;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(255,109,59,.25);
+}
+
 /* Macro bars */
 .home-macro-bars { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
 .simple-bar-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 6px; }

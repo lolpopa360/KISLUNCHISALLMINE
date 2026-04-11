@@ -180,20 +180,57 @@
               <span class="tip-icon-sm">🍽️</span>
               <h4 class="tip-title">오늘의 영양</h4>
             </div>
-            <div class="tip-toggle">
-              <button class="toggle-btn active" data-meal="lunch" id="home-toggle-lunch">급식</button>
-              <button class="toggle-btn" data-meal="dinner" id="home-toggle-dinner">석식</button>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="tip-toggle">
+                <button class="toggle-btn active" data-meal="lunch" id="home-toggle-lunch">급식</button>
+                <button class="toggle-btn" data-meal="dinner" id="home-toggle-dinner">석식</button>
+              </div>
+              <button class="nut-edit-btn" id="nut-edit-btn" style="display:none" title="영양 정보 수정">✏️</button>
             </div>
           </div>
-          <div class="home-kcal-display">
-            <strong id="home-kcal">0</strong>
-            <span>kcal</span>
+
+          <!-- VIEW MODE -->
+          <div id="nut-view-mode">
+            <div class="home-kcal-display">
+              <strong id="home-kcal">0</strong>
+              <span>kcal</span>
+            </div>
+            <div class="home-radar-wrap">
+              <canvas id="home-radar" width="260" height="260"></canvas>
+            </div>
+            <div class="home-macro-bars" id="home-macro-bars"></div>
+            <p id="home-comment" class="home-tip-text">영양 정보를 불러오는 중...</p>
           </div>
-          <div class="home-radar-wrap">
-            <canvas id="home-radar" width="260" height="260"></canvas>
+
+          <!-- EDIT MODE (admin only) -->
+          <div id="nut-edit-mode" style="display:none">
+            <div class="nut-edit-form">
+              <div class="nut-edit-row">
+                <label>칼로리</label>
+                <div class="nut-input-wrap"><input type="number" id="nut-e-kcal" placeholder="0"><span>kcal</span></div>
+              </div>
+              <div class="nut-edit-row">
+                <label>탄수화물</label>
+                <div class="nut-input-wrap"><input type="number" id="nut-e-c" placeholder="0"><span>g</span></div>
+              </div>
+              <div class="nut-edit-row">
+                <label>단백질</label>
+                <div class="nut-input-wrap"><input type="number" id="nut-e-p" placeholder="0"><span>g</span></div>
+              </div>
+              <div class="nut-edit-row">
+                <label>지방</label>
+                <div class="nut-input-wrap"><input type="number" id="nut-e-f" placeholder="0"><span>g</span></div>
+              </div>
+              <div class="nut-edit-row">
+                <label>나트륨</label>
+                <div class="nut-input-wrap"><input type="number" id="nut-e-na" placeholder="0"><span>mg</span></div>
+              </div>
+              <div class="nut-edit-actions">
+                <button class="btn-outline nut-cancel-btn" id="nut-cancel">취소</button>
+                <button class="btn-primary nut-save-btn" id="nut-save">💾 저장</button>
+              </div>
+            </div>
           </div>
-          <div class="home-macro-bars" id="home-macro-bars"></div>
-          <p id="home-comment" class="home-tip-text">영양 정보를 불러오는 중...</p>
         </div>
 
         <div class="section-card" id="photo-teaser">
