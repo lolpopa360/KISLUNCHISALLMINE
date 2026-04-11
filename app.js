@@ -23,10 +23,18 @@
     if (d.getHours() >= 20) {
       d.setDate(d.getDate() + 1);
     }
+    // 주말(토/일)이면 월요일로 이동 (학교 없는 날)
+    var dow = d.getDay();
+    if (dow === 0) d.setDate(d.getDate() + 1);   // 일→월
+    if (dow === 6) d.setDate(d.getDate() + 2);   // 토→월
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
   function isTomorrowOnHome() {
-    return new Date().getHours() >= 20;
+    var d = new Date();
+    if (d.getHours() >= 20) return true;
+    // 주말도 "다음 날" 표시로 처리
+    var dow = d.getDay();
+    return dow === 0 || dow === 6;
   }
   function todayLabel() {
     var d = new Date();
@@ -284,7 +292,9 @@
     var hmt = $('home-meal-title');
     var dd = $('date-display');
     if (isTomorrowOnHome()) {
-      if (hmt) hmt.textContent = '🌙 내일의 식단';
+      var _now = new Date();
+      var _isWeekend = _now.getDay() === 0 || _now.getDay() === 6;
+      if (hmt) hmt.textContent = _isWeekend ? '📅 월요일 식단' : '🌙 내일의 식단';
       var d = new Date(); d.setDate(d.getDate() + 1);
       var days = ['일','월','화','수','목','금','토'];
       if (dd) dd.textContent = d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + days[d.getDay()] + '요일';
@@ -778,17 +788,18 @@
     }
   }
 
-  // ═══ HOME NUTRITION (Simple) ═══
+  // ═══ HOME NUTRITION (Simple + Radar) ═══
   function renderHomeNutrition(dateStr, mealType) {
     var data = loadMeals(dateStr);
     var menus = data ? (data[mealType] || []) : [];
 
-    var totalKcal = 0, p = 0, f = 0, c = 0;
-    menus.forEach(m => {
+    var totalKcal = 0, p = 0, f = 0, c = 0, na = 0;
+    menus.forEach(function(m) {
       totalKcal += (m.kcal || 0);
       p += (m.p || 0);
       f += (m.f || 0);
       c += (m.c || 0);
+      na += (m.na || 0);
     });
 
     var kcalEl = $('home-kcal');
@@ -797,6 +808,7 @@
     var commentEl = $('home-comment');
     if (commentEl) commentEl.textContent = getMealTip(menus);
 
+    // Macro bars (use actual data or estimate from kcal)
     var barsEl = $('home-macro-bars');
     if (barsEl) {
       var protein = p || Math.round(totalKcal * 0.12 / 4);
@@ -807,6 +819,97 @@
         makeSimpleBar('탄수화물', carbs, 130, 'g', '#FF6D3B') +
         makeSimpleBar('단백질', protein, 55, 'g', '#2E7D32') +
         makeSimpleBar('지방', fat, 44, 'g', fat > 30 ? '#ef4444' : '#78716c');
+    }
+
+    // Hexagon Radar Chart
+    var canvas = $('home-radar');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var w = canvas.width, h = canvas.height;
+    var cx = w / 2, cy = h / 2;
+    var radius = 95;
+
+    var protein2 = p || Math.round(totalKcal * 0.12 / 4);
+    var fat2 = f || Math.round(totalKcal * 0.3 / 9);
+    var carbs2 = c || Math.round(totalKcal * 0.58 / 4);
+    var na2 = na || (totalKcal > 0 ? 800 : 0);
+
+    var dataVals = [
+      Math.min(carbs2 / 120, 1.0),
+      Math.min(protein2 / 50, 1.0),
+      Math.min(fat2 / 40, 1.0),
+      Math.min(na2 / 1800, 1.0),
+      totalKcal > 0 ? 0.7 : 0,
+      totalKcal > 0 ? 0.6 : 0
+    ];
+    if (totalKcal === 0) dataVals = [0, 0, 0, 0, 0, 0];
+    var labels = ['탄수화물', '단백질', '지방', '나트륨', '비타민', '칼슘'];
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Grid hexagons
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#e2e8f0';
+    for (var level = 1; level <= 4; level++) {
+      ctx.beginPath();
+      for (var i = 0; i < 6; i++) {
+        var angle = (Math.PI * 2 / 6) * i - Math.PI / 2;
+        var r = (radius / 4) * level;
+        var x = cx + r * Math.cos(angle);
+        var y = cy + r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath(); ctx.stroke();
+    }
+
+    // Axis lines
+    ctx.strokeStyle = '#e2e8f0';
+    for (var i = 0; i < 6; i++) {
+      var angle = (Math.PI * 2 / 6) * i - Math.PI / 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + radius * Math.cos(angle), cy + radius * Math.sin(angle));
+      ctx.stroke();
+    }
+
+    // Data polygon
+    if (totalKcal > 0) {
+      ctx.beginPath();
+      for (var i = 0; i < 6; i++) {
+        var angle = (Math.PI * 2 / 6) * i - Math.PI / 2;
+        var r = radius * dataVals[i];
+        var x = cx + r * Math.cos(angle);
+        var y = cy + r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(255, 109, 59, 0.25)';
+      ctx.fill();
+      ctx.strokeStyle = '#FF6D3B';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Data points
+      for (var i = 0; i < 6; i++) {
+        var angle = (Math.PI * 2 / 6) * i - Math.PI / 2;
+        var r = radius * dataVals[i];
+        ctx.beginPath();
+        ctx.arc(cx + r * Math.cos(angle), cy + r * Math.sin(angle), 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#FF6D3B';
+        ctx.fill();
+      }
+    }
+
+    // Labels
+    ctx.fillStyle = '#64748b';
+    ctx.font = '600 11px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    for (var i = 0; i < 6; i++) {
+      var angle = (Math.PI * 2 / 6) * i - Math.PI / 2;
+      var r = radius + 22;
+      var lx = cx + r * Math.cos(angle);
+      var ly = cy + r * Math.sin(angle);
+      ctx.fillText(labels[i], lx, ly + 4);
     }
   }
 

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="color-scheme" content="light">
   <title>급식뭐지</title>
   <meta name="description" content="우리 학교 급식을 한눈에! 메뉴, 영양, 알레르기 정보를 확인하세요.">
 
@@ -159,8 +160,8 @@
           </div>
         </div>
         <div class="tab-bar">
-          <button class="tab active" data-meal="lunch">🌞 점심</button>
-          <button class="tab" data-meal="dinner">🌙 저녁</button>
+          <button class="tab active" data-meal="lunch">🌞 급식</button>
+          <button class="tab" data-meal="dinner">🌙 석식</button>
         </div>
         <!-- OLD kcal-banner removed for home-insight integration -->
         <div class="menu-grid" id="menu-grid"></div>
@@ -180,13 +181,16 @@
               <h4 class="tip-title">오늘의 영양</h4>
             </div>
             <div class="tip-toggle">
-              <button class="toggle-btn active" data-meal="lunch" id="home-toggle-lunch">점심</button>
-              <button class="toggle-btn" data-meal="dinner" id="home-toggle-dinner">저녁</button>
+              <button class="toggle-btn active" data-meal="lunch" id="home-toggle-lunch">급식</button>
+              <button class="toggle-btn" data-meal="dinner" id="home-toggle-dinner">석식</button>
             </div>
           </div>
           <div class="home-kcal-display">
             <strong id="home-kcal">0</strong>
             <span>kcal</span>
+          </div>
+          <div class="home-radar-wrap">
+            <canvas id="home-radar" width="260" height="260"></canvas>
           </div>
           <div class="home-macro-bars" id="home-macro-bars"></div>
           <p id="home-comment" class="home-tip-text">영양 정보를 불러오는 중...</p>
@@ -254,11 +258,11 @@
           <div id="cbs-today-photo" class="cbs-photo-box"></div>
 
           <div class="cbs-meal-section">
-            <div class="cbs-meal-title cbs-title-lunch">🍽️ 중식 (점심)</div>
+            <div class="cbs-meal-title cbs-title-lunch">🌞 급식 (중식)</div>
             <div id="cbs-lunch-list" class="cbs-meal-list"></div>
           </div>
           <div class="cbs-meal-section cbs-meal-section-gap">
-            <div class="cbs-meal-title cbs-title-dinner">🍽️ 석식 (저녁)</div>
+            <div class="cbs-meal-title cbs-title-dinner">🌙 석식 (저녁)</div>
             <div id="cbs-dinner-list" class="cbs-meal-list"></div>
           </div>
 
@@ -268,8 +272,8 @@
           </div>
           <div class="cbs-nutrition-section">
             <div class="tip-toggle cbs-meal-toggle">
-              <button class="toggle-btn active" id="cbs-toggle-lunch">점심</button>
-              <button class="toggle-btn" id="cbs-toggle-dinner">저녁</button>
+              <button class="toggle-btn active" id="cbs-toggle-lunch">급식</button>
+              <button class="toggle-btn" id="cbs-toggle-dinner">석식</button>
             </div>
             <div class="cbs-kcal-row">
               <strong id="cbs-kcal">0</strong>
