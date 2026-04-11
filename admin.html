@@ -286,13 +286,13 @@
       
       if (lMatch) {
          var names = lMatch[1].split(/[,]+|\s{2,}/).map(n=>n.replace(/\(.*?\)/g, '').trim()).filter(n=>n);
-         names.forEach(n => addRowWithData('lunch', { emoji: '🍲', name: n, kcal: '', allergy: '' }));
+         names.forEach(n => addRowWithData('lunch', { emoji: '🍲', name: n, kcal: '', p: '', f: '', c: '', na: '', allergy: '' }));
          document.getElementById('lunch-empty').style.display = 'none';
       }
       
       if (dMatch) {
          var names = dMatch[1].split(/[,]+|\s{2,}/).map(n=>n.replace(/\(.*?\)/g, '').trim()).filter(n=>n);
-         names.forEach(n => addRowWithData('dinner', { emoji: '🍲', name: n, kcal: '', allergy: '' }));
+         names.forEach(n => addRowWithData('dinner', { emoji: '🍲', name: n, kcal: '', p: '', f: '', c: '', na: '', allergy: '' }));
          document.getElementById('dinner-empty').style.display = 'none';
       }
 
@@ -416,14 +416,14 @@
         var nums = inlineMatch[2].split('.').map(function(n){ return n.trim(); }).filter(Boolean);
         var allergyNames = nums.map(function(n){ return allergyMap[n] || ''; }).filter(Boolean);
         if (name) {
-          current = { emoji: pickEmoji(name), name: name, kcal: 0, allergy: allergyNames.join('·') };
+          current = { emoji: pickEmoji(name), name: name, kcal: 0, p: 0, f: 0, c: 0, na: 0, allergy: allergyNames.join('·') };
           menus.push(current);
         }
       } else {
         // 알레르기 없는 순수 메뉴명
         var name = line.replace(/\*\S+/g, '').trim();
         if (name) {
-          current = { emoji: pickEmoji(name), name: name, kcal: 0, allergy: '' };
+          current = { emoji: pickEmoji(name), name: name, kcal: 0, p: 0, f: 0, c: 0, na: 0, allergy: '' };
           menus.push(current);
         }
       }
@@ -665,7 +665,11 @@
     row.innerHTML =
       '<select class="form-input fi-emoji">'+optHtml+'</select>'+
       '<input type="text" class="form-input fi-name" placeholder="메뉴 이름">'+
-      '<input type="number" class="form-input fi-kcal" placeholder="kcal">'+
+      '<input type="number" class="form-input fi-kcal" placeholder="칼로리(kcal)">'+
+      '<input type="number" class="form-input fi-p" placeholder="단백질(g)">'+
+      '<input type="number" class="form-input fi-f" placeholder="지방(g)">'+
+      '<input type="number" class="form-input fi-c" placeholder="탄수화물(g)">'+
+      '<input type="number" class="form-input fi-na" placeholder="나트륨(mg)">'+
       '<input type="text" class="form-input fi-allergy" placeholder="알레르기 (없으면 비움)">'+
       '<button class="btn-del-row">✕</button>';
     row.querySelector('.btn-del-row').addEventListener('click', function(){
@@ -679,10 +683,19 @@
     var rows = document.getElementById(type+'-list').querySelectorAll('.editor-row');
     var arr = [];
     for (var i = 0; i < rows.length; i++) {
-      var inputs = rows[i].querySelectorAll('.form-input');
-      var name = inputs[1].value.trim();
+      var r = rows[i];
+      var name = r.querySelector('.fi-name').value.trim();
       if (!name) continue;
-      arr.push({ emoji: inputs[0].value, name: name, kcal: parseInt(inputs[2].value)||0, allergy: inputs[3].value.trim()||null });
+      arr.push({
+        emoji: r.querySelector('.fi-emoji').value,
+        name: name,
+        kcal: parseInt(r.querySelector('.fi-kcal').value) || 0,
+        p: parseFloat(r.querySelector('.fi-p').value) || 0,
+        f: parseFloat(r.querySelector('.fi-f').value) || 0,
+        c: parseFloat(r.querySelector('.fi-c').value) || 0,
+        na: parseFloat(r.querySelector('.fi-na').value) || 0,
+        allergy: r.querySelector('.fi-allergy').value.trim() || null
+      });
     }
     return arr;
   }
@@ -716,7 +729,11 @@
     row.innerHTML =
       '<select class="form-input fi-emoji">'+optHtml+'</select>'+
       '<input type="text" class="form-input fi-name" value="'+data.name+'">'+
-      '<input type="number" class="form-input fi-kcal" value="'+(data.kcal||'')+'" placeholder="kcal">'+
+      '<input type="number" class="form-input fi-kcal" value="'+(data.kcal||'')+'" placeholder="칼로리(kcal)">'+
+      '<input type="number" class="form-input fi-p" value="'+(data.p||'')+'" placeholder="단백질(g)">'+
+      '<input type="number" class="form-input fi-f" value="'+(data.f||'')+'" placeholder="지방(g)">'+
+      '<input type="number" class="form-input fi-c" value="'+(data.c||'')+'" placeholder="탄수화물(g)">'+
+      '<input type="number" class="form-input fi-na" value="'+(data.na||'')+'" placeholder="나트륨(mg)">'+
       '<input type="text" class="form-input fi-allergy" value="'+(data.allergy||'')+'" placeholder="알레르기">'+
       '<button class="btn-del-row">✕</button>';
     row.querySelector('.btn-del-row').addEventListener('click', function(){
