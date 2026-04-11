@@ -594,15 +594,29 @@
   var calBottomSheet = $('cal-bottom-sheet');
   var cbsSelectedDate = '';
   
+  function dateStrToLabel(dateStr) {
+    // parse without UTC shift: YYYY-MM-DD
+    var parts = dateStr.split('-');
+    var y = parseInt(parts[0]), mo = parseInt(parts[1]) - 1, d = parseInt(parts[2]);
+    var dObj = new Date(y, mo, d);
+    var dayNames = ['일','월','화','수','목','금','토'];
+    return mo + 1 + '월 ' + d + '일 (' + dayNames[dObj.getDay()] + ')';
+  }
+
+  function dateStrShift(dateStr, delta) {
+    var parts = dateStr.split('-');
+    var d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+    d.setDate(d.getDate() + delta);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
   async function openCalSheet(dateStr, data) {
     cbsSelectedDate = dateStr;
     calSheetBackdrop = $('cal-sheet-backdrop');
     calBottomSheet = $('cal-bottom-sheet');
     if(!calBottomSheet) return;
-    
-    var dObj = new Date(dateStr);
-    var dayNames = ['일','월','화','수','목','금','토'];
-    $('cbs-date-title').textContent = (dObj.getMonth() + 1) + '월 ' + dObj.getDate() + '일 (' + dayNames[dObj.getDay()] + ')';
+
+    $('cbs-date-title').textContent = dateStrToLabel(dateStr);
 
     var lList = $('cbs-lunch-list');
     var dList = $('cbs-dinner-list');
@@ -719,15 +733,42 @@
   if($('cbs-close-btn')) $('cbs-close-btn').addEventListener('click', closeCalSheet);
   if($('cal-sheet-backdrop')) $('cal-sheet-backdrop').addEventListener('click', closeCalSheet);
 
-  var sheetStartY = 0;
-  var sheetCurrentY = 0;
+  // Prev/Next day buttons
+  if($('cbs-prev-day')) $('cbs-prev-day').addEventListener('click', function() {
+    openCalSheet(dateStrShift(cbsSelectedDate, -1), loadMeals(dateStrShift(cbsSelectedDate, -1)));
+  });
+  if($('cbs-next-day')) $('cbs-next-day').addEventListener('click', function() {
+    openCalSheet(dateStrShift(cbsSelectedDate, 1), loadMeals(dateStrShift(cbsSelectedDate, 1)));
+  });
+
+  // Swipe: down to close, left/right to navigate days
+  var sheetStartY = 0, sheetStartX = 0;
   var handleArea = $('cbs-handle-area');
   if(handleArea) {
-      handleArea.addEventListener('touchstart', function(e) { sheetStartY = e.touches[0].clientY; }, {passive:true});
-      handleArea.addEventListener('touchmove', function(e) {
-        sheetCurrentY = e.touches[0].clientY;
-        if (sheetCurrentY - sheetStartY > 30) closeCalSheet();
-      }, {passive:true});
+    handleArea.addEventListener('touchstart', function(e) {
+      sheetStartY = e.touches[0].clientY;
+    }, {passive:true});
+    handleArea.addEventListener('touchmove', function(e) {
+      if (e.touches[0].clientY - sheetStartY > 60) closeCalSheet();
+    }, {passive:true});
+  }
+
+  // Horizontal swipe anywhere on the sheet content
+  var sheetContent = document.querySelector('.cal-bottom-sheet .cbs-content');
+  if(sheetContent) {
+    sheetContent.addEventListener('touchstart', function(e) {
+      sheetStartX = e.touches[0].clientX;
+      sheetStartY = e.touches[0].clientY;
+    }, {passive:true});
+    sheetContent.addEventListener('touchend', function(e) {
+      var dx = e.changedTouches[0].clientX - sheetStartX;
+      var dy = e.changedTouches[0].clientY - sheetStartY;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        // horizontal swipe
+        var delta = dx < 0 ? 1 : -1; // swipe left = next day, right = prev day
+        openCalSheet(dateStrShift(cbsSelectedDate, delta), loadMeals(dateStrShift(cbsSelectedDate, delta)));
+      }
+    }, {passive:true});
   }
 
   // ═══ PHOTO FEED ═══
@@ -841,17 +882,20 @@
         makeSimpleBar('지방', fat, 44, 'g', fat > 30 ? '#ef4444' : '#78716c');
     }
 
-    // Hexagon Radar Chart
+    // Hexagon Radar Chart — crisp on retina
     var canvas = $('home-radar');
     if (!canvas) return;
-    var dpr = window.devicePixelRatio || 1;
+    var dpr = Math.round(window.devicePixelRatio || 1);
     var logicalSize = 240;
-    canvas.width = logicalSize * dpr;
-    canvas.height = logicalSize * dpr;
-    canvas.style.width = logicalSize + 'px';
-    canvas.style.height = logicalSize + 'px';
+    // Only resize if needed to avoid layout thrash
+    if (canvas.width !== logicalSize * dpr) {
+      canvas.width = logicalSize * dpr;
+      canvas.height = logicalSize * dpr;
+      canvas.style.width = logicalSize + 'px';
+      canvas.style.height = logicalSize + 'px';
+    }
     var ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // reset + scale
     var w = logicalSize, h = logicalSize;
     var cx = w / 2, cy = h / 2;
     var radius = 88;
@@ -995,12 +1039,21 @@
     var commentEl = $(containerPrefix + '-comment');
     if (commentEl) commentEl.textContent = getMealTip(menus);
 
-    // Radar Chart Logic
+    // Radar Chart Logic — DPR-scaled for crispness
     var canvas = radarEl;
+    var dpr = Math.round(window.devicePixelRatio || 1);
+    var logicalSize = (containerPrefix === 'home' || containerPrefix.startsWith('cbs')) ? 240 : 300;
+    if (canvas.width !== logicalSize * dpr) {
+      canvas.width = logicalSize * dpr;
+      canvas.height = logicalSize * dpr;
+      canvas.style.width = logicalSize + 'px';
+      canvas.style.height = logicalSize + 'px';
+    }
     var ctx = canvas.getContext('2d');
-    var w = canvas.width; var h = canvas.height;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var w = logicalSize; var h = logicalSize;
     var cx = w / 2; var cy = h / 2;
-    var radius = (containerPrefix === 'home' || containerPrefix.startsWith('cbs')) ? 100 : 140;
+    var radius = (containerPrefix === 'home' || containerPrefix.startsWith('cbs')) ? 88 : 120;
 
     // Data Mapping
     var dataVals = [
@@ -1014,10 +1067,11 @@
     if(totalKcal === 0) dataVals = [0,0,0,0,0,0];
 
     var labels = ['탄수화물', '단백질', '지방', '나트륨', '비타민', '칼슘'];
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 
     ctx.clearRect(0,0,w,h);
     ctx.lineWidth = 1;
-    ctx.strokeStyle = (document.documentElement.classList.contains('dark') || window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'rgba(255,255,255,0.2)' : '#e2e8f0';
+    ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.15)' : '#e2e8f0';
     
     for (var level = 1; level <= 4; level++) {
        ctx.beginPath();
@@ -1048,7 +1102,7 @@
     }
 
     // Labels
-    ctx.fillStyle = (document.documentElement.classList.contains('dark') || window.matchMedia('(prefers-color-scheme: dark)').matches) ? '#cbd5e1' : '#64748b';
+    ctx.fillStyle = isDark ? '#cbd5e1' : '#64748b';
     ctx.font = '700 12px Pretendard, sans-serif';
     ctx.textAlign = 'center';
     for (var i = 0; i < 6; i++) {
