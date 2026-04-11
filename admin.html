@@ -250,6 +250,7 @@
   async function initAdmin() {
     document.getElementById('btn-save').textContent = '데이터 불러오는 중...';
     await fetchAllData();
+    buildFoodDict();
     document.getElementById('btn-save').textContent = '💾 저장하기';
 
     var pickDate = document.getElementById('pick-date');
@@ -653,6 +654,101 @@
     }
   }
 
+  // ═══ 음식 사전 — 과거 입력 데이터에서 자동 수집 ═══
+  var foodDict = {}; // { "현미밥": { emoji, kcal, p, f, c, na, allergy } }
+
+  function buildFoodDict() {
+    foodDict = {};
+    var keys = Object.keys(cachedMeals);
+    for (var i = 0; i < keys.length; i++) {
+      var day = cachedMeals[keys[i]];
+      var all = (day.lunch || []).concat(day.dinner || []);
+      for (var j = 0; j < all.length; j++) {
+        var m = all[j];
+        if (!m.name) continue;
+        // 가장 최근(또는 영양값이 있는) 데이터를 우선 저장
+        if (!foodDict[m.name] || (m.kcal && !foodDict[m.name].kcal)) {
+          foodDict[m.name] = {
+            emoji: m.emoji || '🍽',
+            kcal: m.kcal || 0,
+            p: m.p || 0,
+            f: m.f || 0,
+            c: m.c || 0,
+            na: m.na || 0,
+            allergy: m.allergy || ''
+          };
+        }
+      }
+    }
+  }
+
+  function attachAutoFill(row) {
+    var nameInput = row.querySelector('.fi-name');
+    if (!nameInput) return;
+
+    // 자동완성 드롭다운 생성
+    var dropdown = document.createElement('div');
+    dropdown.className = 'autofill-dropdown';
+    dropdown.style.display = 'none';
+    nameInput.parentNode.style.position = 'relative';
+    nameInput.insertAdjacentElement('afterend', dropdown);
+
+    nameInput.addEventListener('input', function() {
+      var val = this.value.trim();
+      if (val.length < 1) { dropdown.style.display = 'none'; return; }
+
+      var matches = Object.keys(foodDict).filter(function(name) {
+        return name.includes(val) && name !== val;
+      }).slice(0, 6);
+
+      if (matches.length === 0) { dropdown.style.display = 'none'; return; }
+
+      dropdown.innerHTML = '';
+      matches.forEach(function(name) {
+        var item = document.createElement('div');
+        item.className = 'autofill-item';
+        var fd = foodDict[name];
+        item.innerHTML = '<span class="af-emoji">' + fd.emoji + '</span>' +
+          '<span class="af-name">' + name + '</span>' +
+          '<span class="af-info">' + fd.kcal + 'kcal</span>';
+        item.addEventListener('mousedown', function(e) {
+          e.preventDefault();
+          applyFoodData(row, name);
+          dropdown.style.display = 'none';
+        });
+        dropdown.appendChild(item);
+      });
+      dropdown.style.display = '';
+    });
+
+    nameInput.addEventListener('blur', function() {
+      setTimeout(function() { dropdown.style.display = 'none'; }, 150);
+    });
+
+    // 이름 입력 완료 시 (포커스 아웃) 정확 매치 자동채움
+    nameInput.addEventListener('change', function() {
+      var val = this.value.trim();
+      if (foodDict[val]) applyFoodData(row, val);
+    });
+  }
+
+  function applyFoodData(row, name) {
+    var fd = foodDict[name];
+    if (!fd) return;
+    row.querySelector('.fi-name').value = name;
+    row.querySelector('.fi-kcal').value = fd.kcal || '';
+    row.querySelector('.fi-p').value = fd.p || '';
+    row.querySelector('.fi-f').value = fd.f || '';
+    row.querySelector('.fi-c').value = fd.c || '';
+    row.querySelector('.fi-na').value = fd.na || '';
+    row.querySelector('.fi-allergy').value = fd.allergy || '';
+    // 이모지도 맞추기
+    var sel = row.querySelector('.fi-emoji');
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === fd.emoji) { sel.selectedIndex = i; break; }
+    }
+  }
+
   function addRow(type) {
     var list = document.getElementById(type+'-list');
     var empty = document.getElementById(type+'-empty');
@@ -664,7 +760,7 @@
     for (var i = 0; i < emojis.length; i++) optHtml += '<option>'+emojis[i]+'</option>';
     row.innerHTML =
       '<select class="form-input fi-emoji">'+optHtml+'</select>'+
-      '<input type="text" class="form-input fi-name" placeholder="메뉴 이름">'+
+      '<input type="text" class="form-input fi-name" placeholder="메뉴 이름" autocomplete="off">'+
       '<input type="number" class="form-input fi-kcal" placeholder="칼로리(kcal)">'+
       '<input type="number" class="form-input fi-p" placeholder="단백질(g)">'+
       '<input type="number" class="form-input fi-f" placeholder="지방(g)">'+
@@ -676,6 +772,7 @@
       row.remove();
       if (list.children.length === 0) empty.style.display = '';
     });
+    attachAutoFill(row);
     list.appendChild(row);
   }
 
@@ -726,21 +823,31 @@
     for (var i = 0; i < emojis.length; i++) {
       optHtml += '<option'+(emojis[i]===data.emoji?' selected':'')+'>'+emojis[i]+'</option>';
     }
+    // 음식 사전에서 영양값 자동 채움 (값이 0이고 사전에 있으면)
+    var fd = foodDict[data.name];
+    var kcal = data.kcal || (fd ? fd.kcal : '') || '';
+    var pVal = data.p || (fd ? fd.p : '') || '';
+    var fVal = data.f || (fd ? fd.f : '') || '';
+    var cVal = data.c || (fd ? fd.c : '') || '';
+    var naVal = data.na || (fd ? fd.na : '') || '';
+    var allergyVal = data.allergy || (fd ? fd.allergy : '') || '';
+
     row.innerHTML =
       '<select class="form-input fi-emoji">'+optHtml+'</select>'+
-      '<input type="text" class="form-input fi-name" value="'+data.name+'">'+
-      '<input type="number" class="form-input fi-kcal" value="'+(data.kcal||'')+'" placeholder="칼로리(kcal)">'+
-      '<input type="number" class="form-input fi-p" value="'+(data.p||'')+'" placeholder="단백질(g)">'+
-      '<input type="number" class="form-input fi-f" value="'+(data.f||'')+'" placeholder="지방(g)">'+
-      '<input type="number" class="form-input fi-c" value="'+(data.c||'')+'" placeholder="탄수화물(g)">'+
-      '<input type="number" class="form-input fi-na" value="'+(data.na||'')+'" placeholder="나트륨(mg)">'+
-      '<input type="text" class="form-input fi-allergy" value="'+(data.allergy||'')+'" placeholder="알레르기">'+
+      '<input type="text" class="form-input fi-name" value="'+data.name+'" autocomplete="off">'+
+      '<input type="number" class="form-input fi-kcal" value="'+kcal+'" placeholder="칼로리(kcal)">'+
+      '<input type="number" class="form-input fi-p" value="'+pVal+'" placeholder="단백질(g)">'+
+      '<input type="number" class="form-input fi-f" value="'+fVal+'" placeholder="지방(g)">'+
+      '<input type="number" class="form-input fi-c" value="'+cVal+'" placeholder="탄수화물(g)">'+
+      '<input type="number" class="form-input fi-na" value="'+naVal+'" placeholder="나트륨(mg)">'+
+      '<input type="text" class="form-input fi-allergy" value="'+allergyVal+'" placeholder="알레르기">'+
       '<button class="btn-del-row">✕</button>';
     row.querySelector('.btn-del-row').addEventListener('click', function(){
       row.remove();
       var empty = document.getElementById(type+'-empty');
       if (list.children.length === 0) empty.style.display = '';
     });
+    attachAutoFill(row);
     list.appendChild(row);
   }
 
