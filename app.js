@@ -214,11 +214,30 @@
     toast('로그아웃되었습니다');
   });
 
+  // ═══ THEME ═══
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    setDB('theme', theme);
+    var btnLight = $('theme-light');
+    var btnDark = $('theme-dark');
+    if (btnLight) btnLight.classList.toggle('active', theme === 'light');
+    if (btnDark) btnDark.classList.toggle('active', theme === 'dark');
+  }
+
+  // Apply saved theme on load
+  applyTheme(getDB('theme', 'light'));
+
   // ═══ APP INIT ═══
   function initApp() {
     // 1. 필수 UI 인터랙션 우선 설정 (데이터 로딩과 무관하게 작동해야 함)
     setupNav();
     setupTabs();
+
+    // Theme toggle buttons
+    var btnLight = $('theme-light');
+    var btnDark = $('theme-dark');
+    if (btnLight) btnLight.addEventListener('click', function() { applyTheme('light'); });
+    if (btnDark) btnDark.addEventListener('click', function() { applyTheme('dark'); });
 
     var clk = $('clock');
     if (clk) {
@@ -485,8 +504,9 @@
       navBtns[i].classList.toggle('active', navBtns[i].getAttribute('data-page') === pg);
     }
 
-    // Show/hide FAB on photo page
-    $('btn-fab').style.display = (pg === 'photo') ? '' : 'none';
+    // Show/hide FAB on photo page (admin only)
+    var isAdmin = currentUser && currentUser.role === 'admin';
+    $('btn-fab').style.display = (pg === 'photo' && isAdmin) ? '' : 'none';
 
     showOnlyPage(pg);
     $('main-scroll').scrollTop = 0;
@@ -824,10 +844,17 @@
     // Hexagon Radar Chart
     var canvas = $('home-radar');
     if (!canvas) return;
+    var dpr = window.devicePixelRatio || 1;
+    var logicalSize = 240;
+    canvas.width = logicalSize * dpr;
+    canvas.height = logicalSize * dpr;
+    canvas.style.width = logicalSize + 'px';
+    canvas.style.height = logicalSize + 'px';
     var ctx = canvas.getContext('2d');
-    var w = canvas.width, h = canvas.height;
+    ctx.scale(dpr, dpr);
+    var w = logicalSize, h = logicalSize;
     var cx = w / 2, cy = h / 2;
-    var radius = 95;
+    var radius = 88;
 
     var protein2 = p || Math.round(totalKcal * 0.12 / 4);
     var fat2 = f || Math.round(totalKcal * 0.3 / 9);
@@ -1183,9 +1210,13 @@
     var previewImg = $('upload-preview-img');
 
     if ($('btn-fab')) {
-      $('btn-fab').addEventListener('click', function () { 
+      $('btn-fab').addEventListener('click', function () {
+        if (!currentUser || currentUser.role !== 'admin') {
+          toast('📸 사진 업로드는 관리자만 가능합니다');
+          return;
+        }
         if ($('upload-date')) $('upload-date').value = todayStr();
-        modal.classList.add('show'); 
+        modal.classList.add('show');
       });
     }
     
