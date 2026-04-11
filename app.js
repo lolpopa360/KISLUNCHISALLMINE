@@ -298,6 +298,7 @@
     if (!data) {
       grid.style.display = 'none';
       empty.style.display = '';
+      renderHomeNutrition(dateStr, currentMeal);
       return;
     }
 
@@ -305,6 +306,7 @@
     if (menus.length === 0) {
       grid.style.display = 'none';
       empty.style.display = '';
+      renderHomeNutrition(dateStr, currentMeal);
       return;
     }
 

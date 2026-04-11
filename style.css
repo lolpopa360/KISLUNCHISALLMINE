@@ -982,7 +982,7 @@ input, select { font-family: inherit; }
   display: flex; flex-direction: column; align-items: stretch; gap: 0;
 }
 .tip-header {
-  display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;
   gap: 8px; flex-wrap: wrap;
 }
 .tip-title-row { display: flex; align-items: center; gap: 8px; }
@@ -994,35 +994,45 @@ input, select { font-family: inherit; }
   color: var(--text);
 }
 
+/* Kcal hero number */
 .home-kcal-display {
-  text-align: center; padding: 4px 0 14px;
+  display: flex; align-items: flex-end; justify-content: center; gap: 6px;
+  padding: 0 0 18px;
 }
 .home-kcal-display strong {
   font-family: var(--font-display);
-  font-size: 56px;
+  font-size: 52px;
+  line-height: 1;
   letter-spacing: -2px;
   color: var(--text);
 }
 .home-kcal-display span {
-  font-size: 14px; font-weight: 600; color: var(--text-3); margin-left: 2px;
+  font-size: 15px; font-weight: 700; color: var(--text-3);
+  padding-bottom: 6px;
 }
 
-.home-macro-bars { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
-.simple-bar-head { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
-.simple-bar-head span { font-weight: 600; color: var(--text-2); }
-.simple-bar-val { color: var(--text-3); }
-.simple-bar-track { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
-.simple-bar-fill { height: 100%; border-radius: 4px; transition: width .8s var(--ease); }
+/* Macro bars */
+.home-macro-bars { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+.simple-bar-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 6px; }
+.simple-bar-head span { font-weight: 700; color: var(--text-2); letter-spacing: .3px; }
+.simple-bar-val { font-weight: 600; color: var(--text-3); }
+.simple-bar-track { height: 7px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.simple-bar-fill { height: 100%; border-radius: 99px; transition: width .9s var(--ease); }
 
+/* Tip text — clean, no harsh background */
 .home-tip-text {
-  font-size: 14px; line-height: 1.6; color: var(--text-2); font-weight: 600;
-  background: var(--primary-soft); border-radius: 12px; padding: 14px 16px;
+  font-size: 13px; line-height: 1.6; color: var(--text-2); font-weight: 500;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--primary-soft);
   border-left: 3px solid var(--primary);
 }
 
 @media(prefers-color-scheme: dark) {
-  .home-tip { background: #2C2420; border-color: #4D443E; }
-  .home-tip-text { background: #3D3530; border-color: var(--primary); }
+  .tip-card.home-tip { background: #2C2420; border-color: #4D443E; }
+  .home-tip-text { background: rgba(255,109,59,.12); color: #C4B5A5; }
+  .simple-bar-track { background: #3D3530; }
+  .tip-toggle { background: #3D3530; border-color: #4D443E; }
 }
 
 /* Capsule Toggle */
@@ -1034,7 +1044,7 @@ input, select { font-family: inherit; }
   width: fit-content;
   border: 1px solid var(--border);
 }
-@media(prefers-color-scheme: dark) { .tip-toggle { background: #3D3530; border-color: #4D443E; } }
+/* tip-toggle dark mode handled in home-tip block above */
 
 .toggle-btn {
   padding: 6px 16px; border-radius: 8px; border: none; background: none;

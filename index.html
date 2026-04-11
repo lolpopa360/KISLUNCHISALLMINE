@@ -5,7 +5,32 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <title>급식뭐지</title>
   <meta name="description" content="우리 학교 급식을 한눈에! 메뉴, 영양, 알레르기 정보를 확인하세요.">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- Theme color (Android Chrome / Samsung Internet) -->
   <meta name="theme-color" content="#FF6D3B">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#2C2420">
+
+  <!-- iOS Safari PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="급식뭐지">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="apple-touch-startup-image" href="assets/icon-512.png">
+
+  <!-- Microsoft / general -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="급식뭐지">
+  <meta name="msapplication-TileColor" content="#FF6D3B">
+  <meta name="msapplication-TileImage" content="assets/icon-192.png">
+
+  <!-- Open Graph (for sharing) -->
+  <meta property="og:title" content="급식뭐지">
+  <meta property="og:description" content="우리 학교 급식을 한눈에! 메뉴, 영양, 알레르기 정보를 확인하세요.">
+  <meta property="og:type" content="website">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
@@ -410,5 +435,12 @@
 </div>
 
 <script src="app.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+</script>
 </body>
 </html>
