@@ -1568,6 +1568,20 @@ input, select { font-family: inherit; }
 }
 
 /* ═══ BOTTOM SHEET ENHANCED ═══ */
+.cbs-header { justify-content: space-between; align-items: center; }
+.cbs-header-right { display: flex; align-items: center; gap: 6px; }
+.cbs-day-nav {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  font-size: 20px; font-weight: 700;
+  color: var(--text-2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .15s; flex-shrink: 0;
+}
+.cbs-day-nav:active { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+
 .cbs-close {
   width: 32px; height: 32px;
   border-radius: 50%;
