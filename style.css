@@ -6,6 +6,7 @@
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
+  color-scheme: light;
   --primary: #FF6D3B;
   --primary-dark: #E85D2A;
   --primary-soft: #FFF4EE;
@@ -820,16 +821,7 @@ input, select { font-family: inherit; }
 }
 .cal-bottom-sheet.show { transform: translateY(0); visibility: visible; transition: transform 0.4s cubic-bezier(0.1, 0.9, 0.2, 1), visibility 0s; }
 
-@media(prefers-color-scheme: dark) {
-  .cal-bottom-sheet {
-    background: #2C2420;
-    border-top: 1px solid rgba(255,255,255,.08);
-  }
-  .cal-bottom-sheet * { color: #F7F6F3 !important; }
-  .cbs-meal-item { background: #3D3530 !important; border-color: #4D443E !important; }
-  .cbs-handle { background: #5C544D !important; }
-  .cbs-nutrition-divider::before, .cbs-nutrition-divider::after { background: #4D443E !important; }
-}
+/* dark mode disabled — app forces light mode always */
 
 .cbs-handle-area { width: 100%; height: 28px; display: flex; justify-content: center; align-items: center; cursor: grab; }
 .cbs-handle-area:active { cursor: grabbing; }
@@ -1011,6 +1003,13 @@ input, select { font-family: inherit; }
   padding-bottom: 6px;
 }
 
+/* Radar chart wrapper */
+.home-radar-wrap {
+  display: flex; justify-content: center; align-items: center;
+  margin: 0 0 10px;
+}
+.home-radar-wrap canvas { display: block; max-width: 100%; }
+
 /* Macro bars */
 .home-macro-bars { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
 .simple-bar-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 6px; }
@@ -1028,12 +1027,7 @@ input, select { font-family: inherit; }
   border-left: 3px solid var(--primary);
 }
 
-@media(prefers-color-scheme: dark) {
-  .tip-card.home-tip { background: #2C2420; border-color: #4D443E; }
-  .home-tip-text { background: rgba(255,109,59,.12); color: #C4B5A5; }
-  .simple-bar-track { background: #3D3530; }
-  .tip-toggle { background: #3D3530; border-color: #4D443E; }
-}
+/* dark mode disabled — app forces light mode always */
 
 /* Capsule Toggle */
 .tip-toggle {
