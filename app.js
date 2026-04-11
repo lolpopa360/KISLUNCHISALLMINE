@@ -60,9 +60,12 @@
   var formLogin = $('form-login');
   var formSignup = $('form-signup');
 
-  // Check existing session
+  // Check existing session — but always load app directly
   var existingSession = getDB('session', null);
-  
+  if (existingSession) {
+    currentUser = existingSession;
+  }
+
   async function loadDataAndInit() {
     try {
       const res = await fetch('/api/meals');
@@ -73,13 +76,11 @@
     initApp();
   }
 
-  if (existingSession) {
-    currentUser = existingSession;
-    authScreen.classList.remove('active');
-    authScreen.style.display = 'none';
-    mainScreen.classList.add('active');
-    loadDataAndInit();
-  }
+  // Always skip auth and show main app directly
+  authScreen.classList.remove('active');
+  authScreen.style.display = 'none';
+  mainScreen.classList.add('active');
+  loadDataAndInit();
 
   // Toggle forms
   $('goto-signup').addEventListener('click', function () {
@@ -182,8 +183,11 @@
       setTimeout(function () {
         authScreen.style.display = 'none';
         mainScreen.classList.add('active');
-        loadDataAndInit();
-      }, 400);
+        renderProfile();
+        renderHome();
+        renderAllergy();
+        goPage('profile');
+      }, 300);
       toast('✅ 환영합니다, ' + data.name + '님!');
     } catch(err) {
       btn.textContent = originalBtnText;
@@ -191,11 +195,15 @@
     }
   }
 
-  // LOGOUT
+  // LOGOUT — no reload, just reset state
   $('btn-logout').addEventListener('click', function () {
     if (!confirm('로그아웃 하시겠어요?')) return;
     localStorage.removeItem('session');
-    location.reload();
+    currentUser = null;
+    renderProfile();
+    renderHome();
+    renderAllergy();
+    toast('로그아웃되었습니다');
   });
 
   // ═══ APP INIT ═══
@@ -211,7 +219,7 @@
     }
 
     var wt = $('welcome-text');
-    if (wt) wt.textContent = '안녕하세요, ' + (currentUser ? currentUser.name : '') + '님! 👋';
+    if (wt) wt.textContent = currentUser ? '안녕하세요, ' + currentUser.name + '님!' : '안녕하세요!';
     
     var dd = $('date-display');
     if (dd) dd.textContent = todayLabel();
@@ -221,6 +229,7 @@
     renderCalendar();
     renderFeed();
     renderAllergy();
+    renderProfile();
     setupUpload();
     initFeedDateNav();
 
@@ -240,12 +249,28 @@
 
     var gp = $('goto-photo');
     if (gp) gp.addEventListener('click', function () { goPage('photo'); });
-    
+
     var bb = $('btn-bell');
     if (bb) bb.addEventListener('click', function () { toast('🔔 새로운 알림이 없습니다'); });
-    
+
     var bp = $('btn-profile');
     if (bp) bp.addEventListener('click', function () { goPage('profile'); renderProfile(); });
+
+    // Go to auth from profile page
+    var bga = $('btn-goto-auth');
+    if (bga) bga.addEventListener('click', function () {
+      mainScreen.classList.remove('active');
+      authScreen.style.display = '';
+      authScreen.classList.add('active');
+    });
+
+    // Skip/back from auth screen
+    var asb = $('auth-skip-btn');
+    if (asb) asb.addEventListener('click', function () {
+      authScreen.classList.remove('active');
+      authScreen.style.display = 'none';
+      mainScreen.classList.add('active');
+    });
   }
 
   // ═══ HOME ═══
@@ -437,6 +462,12 @@
     }
     currentPage = pg;
 
+    // Close bottom sheet if open
+    var _bs = $('cal-bottom-sheet');
+    var _bd = $('cal-sheet-backdrop');
+    if (_bs) _bs.classList.remove('show');
+    if (_bd) _bd.classList.remove('show');
+
     var navBtns = $$('.nav-item');
     for (var i = 0; i < navBtns.length; i++) {
       navBtns[i].classList.toggle('active', navBtns[i].getAttribute('data-page') === pg);
@@ -447,6 +478,7 @@
 
     showOnlyPage(pg);
     $('main-scroll').scrollTop = 0;
+    $('app').scrollTop = 0;
   }
 
   function showOnlyPage(pg) {
@@ -639,8 +671,8 @@
       var carbs = c || Math.round(totalKcal * 0.58 / 4);
 
       barsEl.innerHTML =
-        makeSimpleBar('탄수화물', carbs, 130, 'g', '#f59e0b') +
-        makeSimpleBar('단백질', protein, 55, 'g', '#65a30d') +
+        makeSimpleBar('탄수화물', carbs, 130, 'g', '#FF6D3B') +
+        makeSimpleBar('단백질', protein, 55, 'g', '#2E7D32') +
         makeSimpleBar('지방', fat, 44, 'g', fat > 30 ? '#ef4444' : '#78716c');
     }
   }
@@ -649,6 +681,7 @@
     if(!calBottomSheet) return;
     calSheetBackdrop.classList.remove('show');
     calBottomSheet.classList.remove('show');
+    $('app').scrollTop = 0;
   }
 
   if($('cbs-close-btn')) $('cbs-close-btn').addEventListener('click', closeCalSheet);
@@ -769,8 +802,8 @@
       var carbs = c || Math.round(totalKcal * 0.58 / 4);
 
       barsEl.innerHTML =
-        makeSimpleBar('탄수화물', carbs, 130, 'g', '#f59e0b') +
-        makeSimpleBar('단백질', protein, 55, 'g', '#65a30d') +
+        makeSimpleBar('탄수화물', carbs, 130, 'g', '#FF6D3B') +
+        makeSimpleBar('단백질', protein, 55, 'g', '#2E7D32') +
         makeSimpleBar('지방', fat, 44, 'g', fat > 30 ? '#ef4444' : '#78716c');
     }
   }
@@ -876,9 +909,9 @@
         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       }
       ctx.closePath();
-      ctx.fillStyle = 'rgba(16, 185, 129, 0.4)';
+      ctx.fillStyle = 'rgba(46, 125, 50, 0.35)';
       ctx.fill();
-      ctx.strokeStyle = '#10b981';
+      ctx.strokeStyle = '#2E7D32';
       ctx.lineWidth = 3; ctx.stroke();
     }
 
@@ -975,12 +1008,26 @@
   const ALLERGY_LIST = ['난류', '우유', '메밀', '땅콩', '대두', '밀', '고등어', '게', '새우', '돼지고기', '복숭아', '토마토', '아황산류', '호두', '닭고기', '쇠고기', '오징어', '조개류', '잣'];
 
   function renderProfile() {
-    if ($('profile-name')) $('profile-name').textContent = currentUser ? currentUser.name : 'Unknown';
-    if ($('profile-role')) $('profile-role').textContent = currentUser ? (currentUser.role === 'admin' ? '👨‍🍳 관리자' : '🧑‍🎓 학생') : '';
-    if ($('profile-initial')) $('profile-initial').textContent = currentUser ? currentUser.name.charAt(0) : '👤';
+    var anonSection = $('profile-anon');
+    var loggedInSection = $('profile-loggedin');
 
-    var adminBtn = $('admin-access-btn');
-    if (adminBtn) adminBtn.style.display = (currentUser && currentUser.role === 'admin') ? 'block' : 'none';
+    if (currentUser) {
+      // Show logged-in state
+      if (anonSection) anonSection.style.display = 'none';
+      if (loggedInSection) loggedInSection.style.display = '';
+
+      if ($('profile-name')) $('profile-name').textContent = currentUser.name;
+      if ($('profile-role')) $('profile-role').textContent = currentUser.role === 'admin' ? '👨‍🍳 관리자' : '🧑‍🎓 학생';
+      if ($('profile-initial')) $('profile-initial').textContent = currentUser.name.charAt(0);
+
+      var adminBtn = $('admin-access-btn');
+      if (adminBtn) adminBtn.style.display = (currentUser.role === 'admin') ? 'block' : 'none';
+    } else {
+      // Show anonymous state
+      if (anonSection) anonSection.style.display = '';
+      if (loggedInSection) loggedInSection.style.display = 'none';
+      return; // No need to render allergy grid
+    }
 
     var grid = $('allergy-toggle-grid');
     if (grid) {

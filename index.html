@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <title>급식뭐지</title>
   <meta name="description" content="우리 학교 급식을 한눈에! 메뉴, 영양, 알레르기 정보를 확인하세요.">
-  <meta name="theme-color" content="#f59e0b">
+  <meta name="theme-color" content="#FF6D3B">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -19,6 +22,7 @@
       <div class="auth-glow g2"></div>
     </div>
     <div class="auth-content">
+      <button class="auth-skip" id="auth-skip-btn">← 돌아가기</button>
       <div class="auth-logo-area">
         <div class="auth-mascot">
           <img src="assets/mascot.png" alt="급식뭐지 마스코트" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
@@ -124,9 +128,9 @@
       <section class="page active" id="page-home">
         <div class="home-welcome">
           <p class="welcome-hi" id="welcome-text">안녕하세요!</p>
-          <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <div class="home-date-row">
             <h2 id="date-display">오늘 급식</h2>
-            <span id="home-meal-title" style="font-size:14px; font-weight:600; color:var(--primary-dark); background:var(--primary-soft); padding:4px 10px; border-radius:12px;">☀️ 오늘의 식단</span>
+            <span class="meal-badge" id="home-meal-title">☀️ 오늘의 식단</span>
           </div>
         </div>
         <div class="tab-bar">
@@ -192,7 +196,7 @@
 
       <!-- CALENDAR -->
       <section class="page" id="page-calendar">
-        <div class="page-top" style="display:flex; justify-content:space-between; align-items:flex-end;">
+        <div class="page-top page-top-row">
           <div>
             <h2>급식 달력</h2>
             <p class="sub-text" style="margin-top:4px;">한 달의 식단을 한눈에</p>
@@ -219,17 +223,17 @@
         </div>
         <div class="cbs-header">
           <h3 id="cbs-date-title">--</h3>
-          <button id="cbs-close-btn" class="btn-icon" style="font-size:24px; color:var(--gray-dark); background:none; border:none; padding:0;">✕</button>
+          <button id="cbs-close-btn" class="cbs-close">✕</button>
         </div>
         <div class="cbs-content scrollable">
-          <div id="cbs-today-photo" style="display:none; margin-bottom:20px; border-radius:16px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.12);"></div>
-          
+          <div id="cbs-today-photo" class="cbs-photo-box"></div>
+
           <div class="cbs-meal-section">
-            <div class="cbs-meal-title" style="color:var(--orange); font-size:16px; font-weight:900;">🍽️ 중식 (점심)</div>
+            <div class="cbs-meal-title cbs-title-lunch">🍽️ 중식 (점심)</div>
             <div id="cbs-lunch-list" class="cbs-meal-list"></div>
           </div>
-          <div class="cbs-meal-section" style="margin-top:32px;">
-            <div class="cbs-meal-title" style="color:var(--blue); font-size:16px; font-weight:900;">🍽️ 석식 (저녁)</div>
+          <div class="cbs-meal-section cbs-meal-section-gap">
+            <div class="cbs-meal-title cbs-title-dinner">🍽️ 석식 (저녁)</div>
             <div id="cbs-dinner-list" class="cbs-meal-list"></div>
           </div>
 
@@ -260,10 +264,10 @@
           <h2>급식 사진</h2>
           <p class="sub-text">날짜별 급식 사진 기록</p>
         </div>
-        <div class="date-nav" style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px;">
-          <button id="feed-prev" style="background:var(--primary);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;">‹</button>
-          <input type="date" id="feed-date" style="font-size:15px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font-family:inherit;">
-          <button id="feed-next" style="background:var(--primary);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;">›</button>
+        <div class="date-nav">
+          <button class="date-nav-btn" id="feed-prev">‹</button>
+          <input type="date" id="feed-date" class="date-nav-input">
+          <button class="date-nav-btn" id="feed-next">›</button>
         </div>
         <div id="feed-list" class="feed-list"></div>
       </section>
@@ -282,43 +286,55 @@
       <!-- PROFILE / SETTINGS -->
       <section class="page" id="page-profile">
         <div class="page-top">
-          <h2>맞춤 알레르기 설정</h2>
-          <p class="sub-text">스스로 조심해야 할 알레르기를 선택해주세요</p>
+          <h2>설정</h2>
+          <p class="sub-text">알레르기 설정 및 계정 관리</p>
         </div>
-        <div class="profile-card">
-          <div class="profile-avatar"><span id="profile-initial">👤</span></div>
-          <div class="profile-info">
-            <h3 id="profile-name">이름</h3>
-            <span class="profile-role" id="profile-role">역할</span>
+
+        <!-- ANONYMOUS STATE -->
+        <div id="profile-anon" class="login-prompt">
+          <div class="login-prompt-visual">
+            <div class="login-prompt-ring">
+              <span>🍽️</span>
+            </div>
           </div>
+          <h3 class="login-prompt-title">알레르기 설정이 필요하신가요?</h3>
+          <p class="login-prompt-desc">로그인하면 나에게 위험한 알레르기 음식을<br>미리 알려드려요</p>
+          <button class="btn-primary login-prompt-btn" id="btn-goto-auth">로그인 / 회원가입</button>
         </div>
-        
-        <!-- ADMIN ONLY BUTTON -->
-        <div id="admin-access-btn" style="display:none; margin-bottom: 24px;">
-          <a href="admin.html" class="premium-admin-btn">
-            <div class="pa-left">
-              <span class="pa-icon">🧑‍💻</span>
-              <div class="pa-texts">
-                <strong>마스터 관리자 통합 패널</strong>
-                <small>엑셀 업로드 · 캘린더 일괄 수정</small>
+
+        <!-- LOGGED IN STATE -->
+        <div id="profile-loggedin" style="display:none">
+          <div class="profile-card">
+            <div class="profile-avatar"><span id="profile-initial">👤</span></div>
+            <div class="profile-info">
+              <h3 id="profile-name">이름</h3>
+              <span class="profile-role" id="profile-role">역할</span>
+            </div>
+          </div>
+
+          <div id="admin-access-btn" class="admin-access-wrap">
+            <a href="admin.html" class="premium-admin-btn">
+              <div class="pa-left">
+                <span class="pa-icon">🧑‍💻</span>
+                <div class="pa-texts">
+                  <strong>마스터 관리자 통합 패널</strong>
+                  <small>엑셀 업로드 · 캘린더 일괄 수정</small>
+                </div>
               </div>
-            </div>
-            <div class="pa-right">
-              접속 <span>→</span>
-            </div>
-          </a>
-        </div>
-        <div class="section-card">
-          <div class="section-card-head">
-            <span>⚠️ 알레르기 항목 체킹</span>
+              <div class="pa-right">접속 <span>→</span></div>
+            </a>
           </div>
-          <div class="allergy-toggle-grid" id="allergy-toggle-grid">
-            <!-- JS will populate options -->
+
+          <div class="section-card">
+            <div class="section-card-head">
+              <span>⚠️ 알레르기 항목 체킹</span>
+            </div>
+            <div class="allergy-toggle-grid" id="allergy-toggle-grid"></div>
+            <p class="source-note">* 선택된 성분이 급식에 있을 경우 강력하게 경고해 드립니다.</p>
           </div>
-          <p class="source-note">* 선택된 성분이 급식에 있을 경우 강력하게 경고해 드립니다.</p>
+          <button class="btn-primary btn-save" id="btn-save-profile">알레르기 설정 저장</button>
+          <button class="btn-outline btn-logout" id="btn-logout">로그아웃</button>
         </div>
-        <button class="btn-primary" id="btn-save-profile" style="margin-top: 16px;">알레르기 설정 저장</button>
-        <button class="btn-outline" id="btn-logout" style="margin-top: 12px; border: 1.5px solid var(--red); color: var(--red);">로그아웃</button>
       </section>
 
     </main>
@@ -363,19 +379,30 @@
       </div>
       <div class="modal-body">
         <div class="upload-drop" id="upload-drop">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.6"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          <p>사진을 선택하세요</p>
-          <small>JPG, PNG · 최대 10MB</small>
+          <div class="upload-drop-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M5 5l2-2h10l2 2"/></svg>
+          </div>
+          <p class="upload-drop-title">사진을 선택하세요</p>
+          <small class="upload-drop-hint">JPG, PNG · 최대 10MB</small>
+          <span class="upload-drop-badge">탭하여 갤러리 열기</span>
         </div>
         <input type="file" id="upload-file" accept="image/*" hidden>
-        <div id="upload-preview" style="display:none">
+        <div id="upload-preview" class="upload-preview-box">
           <img id="upload-preview-img" alt="미리보기">
+          <button class="upload-preview-change" onclick="document.getElementById('upload-file').click()">사진 변경</button>
         </div>
-        <label class="form-label">날짜 선택</label>
-        <input type="date" class="form-input" id="upload-date">
-        <label class="form-label">한줄 메모</label>
-        <input type="text" class="form-input" id="upload-memo" placeholder="오늘 급식 한마디...">
-        <button class="btn-primary" id="upload-submit">업로드하기</button>
+        <div class="upload-form-group">
+          <label class="form-label">📅 날짜 선택</label>
+          <input type="date" class="form-input" id="upload-date">
+        </div>
+        <div class="upload-form-group">
+          <label class="form-label">💬 한줄 메모</label>
+          <input type="text" class="form-input" id="upload-memo" placeholder="오늘 급식 한마디...">
+        </div>
+        <button class="btn-primary btn-upload" id="upload-submit">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          업로드하기
+        </button>
       </div>
     </div>
   </div>
