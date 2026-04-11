@@ -17,33 +17,43 @@
   function $$(sel) { return document.querySelectorAll(sel); }
 
   // ── Utils ──
+  // ── 베트남 시간 (UTC+7) 기준 날짜/시간 유틸 ──
+  var VN_OFFSET_MS = 7 * 60 * 60 * 1000;
+  function nowVN() {
+    return new Date(Date.now() + VN_OFFSET_MS);
+  }
+  function toDateStr(d) {
+    return d.getUTCFullYear() + '-' +
+      String(d.getUTCMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getUTCDate()).padStart(2, '0');
+  }
+
   function todayStr() {
-    var d = new Date();
+    var d = nowVN();
     // 저녁 8시(20시) 이후면 내일 날짜 반환
-    if (d.getHours() >= 20) {
-      d.setDate(d.getDate() + 1);
+    if (d.getUTCHours() >= 20) {
+      d = new Date(d.getTime() + 86400000);
     }
-    // 주말(토/일)이면 월요일로 이동 (학교 없는 날)
-    var dow = d.getDay();
-    if (dow === 0) d.setDate(d.getDate() + 1);   // 일→월
-    if (dow === 6) d.setDate(d.getDate() + 2);   // 토→월
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    // 주말(토/일)이면 월요일로 이동
+    var dow = d.getUTCDay();
+    if (dow === 0) d = new Date(d.getTime() + 86400000);
+    if (dow === 6) d = new Date(d.getTime() + 2 * 86400000);
+    return toDateStr(d);
   }
   function isTomorrowOnHome() {
-    var d = new Date();
-    if (d.getHours() >= 20) return true;
-    // 주말도 "다음 날" 표시로 처리
-    var dow = d.getDay();
+    var d = nowVN();
+    if (d.getUTCHours() >= 20) return true;
+    var dow = d.getUTCDay();
     return dow === 0 || dow === 6;
   }
   function todayLabel() {
-    var d = new Date();
+    var d = nowVN();
     var days = ['일', '월', '화', '수', '목', '금', '토'];
-    return d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + days[d.getDay()] + '요일';
+    return d.getUTCFullYear() + '년 ' + (d.getUTCMonth() + 1) + '월 ' + d.getUTCDate() + '일 ' + days[d.getUTCDay()] + '요일';
   }
   function clockStr() {
-    var d = new Date();
-    return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+    var d = nowVN();
+    return d.getUTCHours() + ':' + String(d.getUTCMinutes()).padStart(2, '0');
   }
   function toast(msg) {
     var t = $('toast');
@@ -311,12 +321,12 @@
     var hmt = $('home-meal-title');
     var dd = $('date-display');
     if (isTomorrowOnHome()) {
-      var _now = new Date();
-      var _isWeekend = _now.getDay() === 0 || _now.getDay() === 6;
+      var _vnNow = nowVN();
+      var _isWeekend = _vnNow.getUTCDay() === 0 || _vnNow.getUTCDay() === 6;
       if (hmt) hmt.textContent = _isWeekend ? '📅 월요일 식단' : '🌙 내일의 식단';
-      var d = new Date(); d.setDate(d.getDate() + 1);
+      var _next = new Date(_vnNow.getTime() + 86400000);
       var days = ['일','월','화','수','목','금','토'];
-      if (dd) dd.textContent = d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + days[d.getDay()] + '요일';
+      if (dd) dd.textContent = _next.getUTCFullYear() + '년 ' + (_next.getUTCMonth() + 1) + '월 ' + _next.getUTCDate() + '일 ' + days[_next.getUTCDay()] + '요일';
     } else {
       if (hmt) hmt.textContent = '☀️ 오늘의 식단';
       if (dd) dd.textContent = todayLabel();
@@ -783,16 +793,12 @@
       renderFeed();
     });
     $('feed-prev').addEventListener('click', function() {
-      var d = new Date(feedDate);
-      d.setDate(d.getDate() - 1);
-      feedDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      feedDate = dateStrShift(feedDate, -1);
       $('feed-date').value = feedDate;
       renderFeed();
     });
     $('feed-next').addEventListener('click', function() {
-      var d = new Date(feedDate);
-      d.setDate(d.getDate() + 1);
-      feedDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      feedDate = dateStrShift(feedDate, 1);
       $('feed-date').value = feedDate;
       renderFeed();
     });
