@@ -60,9 +60,12 @@
   var formLogin = $('form-login');
   var formSignup = $('form-signup');
 
-  // Check existing session
+  // Check existing session — but always load app directly
   var existingSession = getDB('session', null);
-  
+  if (existingSession) {
+    currentUser = existingSession;
+  }
+
   async function loadDataAndInit() {
     try {
       const res = await fetch('/api/meals');
@@ -73,13 +76,11 @@
     initApp();
   }
 
-  if (existingSession) {
-    currentUser = existingSession;
-    authScreen.classList.remove('active');
-    authScreen.style.display = 'none';
-    mainScreen.classList.add('active');
-    loadDataAndInit();
-  }
+  // Always skip auth and show main app directly
+  authScreen.classList.remove('active');
+  authScreen.style.display = 'none';
+  mainScreen.classList.add('active');
+  loadDataAndInit();
 
   // Toggle forms
   $('goto-signup').addEventListener('click', function () {
@@ -182,8 +183,11 @@
       setTimeout(function () {
         authScreen.style.display = 'none';
         mainScreen.classList.add('active');
-        loadDataAndInit();
-      }, 400);
+        renderProfile();
+        renderHome();
+        renderAllergy();
+        goPage('profile');
+      }, 300);
       toast('✅ 환영합니다, ' + data.name + '님!');
     } catch(err) {
       btn.textContent = originalBtnText;
@@ -191,11 +195,15 @@
     }
   }
 
-  // LOGOUT
+  // LOGOUT — no reload, just reset state
   $('btn-logout').addEventListener('click', function () {
     if (!confirm('로그아웃 하시겠어요?')) return;
     localStorage.removeItem('session');
-    location.reload();
+    currentUser = null;
+    renderProfile();
+    renderHome();
+    renderAllergy();
+    toast('로그아웃되었습니다');
   });
 
   // ═══ APP INIT ═══
@@ -211,7 +219,7 @@
     }
 
     var wt = $('welcome-text');
-    if (wt) wt.textContent = '안녕하세요, ' + (currentUser ? currentUser.name : '') + '님! 👋';
+    if (wt) wt.textContent = currentUser ? '안녕하세요, ' + currentUser.name + '님!' : '안녕하세요!';
     
     var dd = $('date-display');
     if (dd) dd.textContent = todayLabel();
@@ -221,6 +229,7 @@
     renderCalendar();
     renderFeed();
     renderAllergy();
+    renderProfile();
     setupUpload();
     initFeedDateNav();
 
@@ -230,22 +239,38 @@
     if (htl && htd) {
       htl.addEventListener('click', function() {
         htl.classList.add('active'); htd.classList.remove('active');
-        renderNutrition(todayStr(), 'home', 'lunch');
+        renderHomeNutrition(todayStr(), 'lunch');
       });
       htd.addEventListener('click', function() {
         htd.classList.add('active'); htl.classList.remove('active');
-        renderNutrition(todayStr(), 'home', 'dinner');
+        renderHomeNutrition(todayStr(), 'dinner');
       });
     }
 
     var gp = $('goto-photo');
     if (gp) gp.addEventListener('click', function () { goPage('photo'); });
-    
+
     var bb = $('btn-bell');
     if (bb) bb.addEventListener('click', function () { toast('🔔 새로운 알림이 없습니다'); });
-    
+
     var bp = $('btn-profile');
     if (bp) bp.addEventListener('click', function () { goPage('profile'); renderProfile(); });
+
+    // Go to auth from profile page
+    var bga = $('btn-goto-auth');
+    if (bga) bga.addEventListener('click', function () {
+      mainScreen.classList.remove('active');
+      authScreen.style.display = '';
+      authScreen.classList.add('active');
+    });
+
+    // Skip/back from auth screen
+    var asb = $('auth-skip-btn');
+    if (asb) asb.addEventListener('click', function () {
+      authScreen.classList.remove('active');
+      authScreen.style.display = 'none';
+      mainScreen.classList.add('active');
+    });
   }
 
   // ═══ HOME ═══
@@ -273,6 +298,7 @@
     if (!data) {
       grid.style.display = 'none';
       empty.style.display = '';
+      renderHomeNutrition(dateStr, currentMeal);
       return;
     }
 
@@ -280,6 +306,7 @@
     if (menus.length === 0) {
       grid.style.display = 'none';
       empty.style.display = '';
+      renderHomeNutrition(dateStr, currentMeal);
       return;
     }
 
@@ -321,8 +348,8 @@
       grid.appendChild(card);
     }
 
-    // 홈 화면 영양 분석 렌더링 (현재 선택된 메인 탭 기준 우선)
-    renderNutrition(dateStr, 'home', currentMeal);
+    // 홈 화면 영양 렌더링 (간소화)
+    renderHomeNutrition(dateStr, currentMeal);
   }
 
   // ═══ TABS ═══
@@ -437,6 +464,12 @@
     }
     currentPage = pg;
 
+    // Close bottom sheet if open
+    var _bs = $('cal-bottom-sheet');
+    var _bd = $('cal-sheet-backdrop');
+    if (_bs) _bs.classList.remove('show');
+    if (_bd) _bd.classList.remove('show');
+
     var navBtns = $$('.nav-item');
     for (var i = 0; i < navBtns.length; i++) {
       navBtns[i].classList.toggle('active', navBtns[i].getAttribute('data-page') === pg);
@@ -447,6 +480,7 @@
 
     showOnlyPage(pg);
     $('main-scroll').scrollTop = 0;
+    $('app').scrollTop = 0;
   }
 
   function showOnlyPage(pg) {
@@ -588,21 +622,68 @@
     makeMealItems(data ? data.lunch : [], lList);
     makeMealItems(data ? data.dinner : [], dList);
 
-    // 통합 영양 분석 렌더링 (중식/석식 각각)
-    renderNutrition(dateStr, 'cbs-lunch', 'lunch');
-    renderNutrition(dateStr, 'cbs-dinner', 'dinner');
+    // 영양 정보 렌더링 (기본: 점심)
+    renderSheetNutrition(dateStr, 'lunch');
+
+    // 토글 버튼 이벤트
+    var cbsToggleLunch = $('cbs-toggle-lunch');
+    var cbsToggleDinner = $('cbs-toggle-dinner');
+    if (cbsToggleLunch && cbsToggleDinner) {
+      cbsToggleLunch.onclick = function() {
+        cbsToggleLunch.classList.add('active'); cbsToggleDinner.classList.remove('active');
+        renderSheetNutrition(cbsSelectedDate, 'lunch');
+      };
+      cbsToggleDinner.onclick = function() {
+        cbsToggleDinner.classList.add('active'); cbsToggleLunch.classList.remove('active');
+        renderSheetNutrition(cbsSelectedDate, 'dinner');
+      };
+      // 리셋 토글 상태
+      cbsToggleLunch.classList.add('active');
+      cbsToggleDinner.classList.remove('active');
+    }
 
     calSheetBackdrop.classList.add('show');
     calBottomSheet.classList.add('show');
-    // 스크롤 초기화
     var content = calBottomSheet.querySelector('.cbs-content');
     if (content) content.scrollTop = 0;
+  }
+
+  function renderSheetNutrition(dateStr, mealType) {
+    var data = loadMeals(dateStr);
+    var menus = data ? (data[mealType] || []) : [];
+
+    var totalKcal = 0, p = 0, f = 0, c = 0;
+    menus.forEach(m => {
+      totalKcal += (m.kcal || 0);
+      p += (m.p || 0);
+      f += (m.f || 0);
+      c += (m.c || 0);
+    });
+
+    var kcalEl = $('cbs-kcal');
+    if (kcalEl) kcalEl.textContent = totalKcal;
+
+    var commentEl = $('cbs-comment');
+    if (commentEl) commentEl.textContent = getMealTip(menus);
+
+    var barsEl = $('cbs-macro-bars');
+    if (barsEl) {
+      var protein = p || Math.round(totalKcal * 0.12 / 4);
+      var fat = f || Math.round(totalKcal * 0.3 / 9);
+      var carbs = c || Math.round(totalKcal * 0.58 / 4);
+
+      barsEl.innerHTML =
+        makeSimpleBar('탄수화물', carbs, 130, 'g', '#FF6D3B') +
+        makeSimpleBar('단백질', protein, 55, 'g', '#2E7D32') +
+        makeSimpleBar('지방', fat, 44, 'g', fat > 30 ? '#ef4444' : '#78716c');
+    }
   }
 
   function closeCalSheet() {
     if(!calBottomSheet) return;
     calSheetBackdrop.classList.remove('show');
     calBottomSheet.classList.remove('show');
+    $('app').scrollTop = 0;
   }
 
   if($('cbs-close-btn')) $('cbs-close-btn').addEventListener('click', closeCalSheet);
@@ -697,31 +778,69 @@
     }
   }
 
-  // ═══ NUTRITION (Integrated) ═══
-  function generateCoachAdvice(menus) {
-    if (!menus || menus.length === 0) return "급식 정보가 등록되지 않았습니다.";
-    
+  // ═══ HOME NUTRITION (Simple) ═══
+  function renderHomeNutrition(dateStr, mealType) {
+    var data = loadMeals(dateStr);
+    var menus = data ? (data[mealType] || []) : [];
+
+    var totalKcal = 0, p = 0, f = 0, c = 0;
+    menus.forEach(m => {
+      totalKcal += (m.kcal || 0);
+      p += (m.p || 0);
+      f += (m.f || 0);
+      c += (m.c || 0);
+    });
+
+    var kcalEl = $('home-kcal');
+    if (kcalEl) kcalEl.textContent = totalKcal;
+
+    var commentEl = $('home-comment');
+    if (commentEl) commentEl.textContent = getMealTip(menus);
+
+    var barsEl = $('home-macro-bars');
+    if (barsEl) {
+      var protein = p || Math.round(totalKcal * 0.12 / 4);
+      var fat = f || Math.round(totalKcal * 0.3 / 9);
+      var carbs = c || Math.round(totalKcal * 0.58 / 4);
+
+      barsEl.innerHTML =
+        makeSimpleBar('탄수화물', carbs, 130, 'g', '#FF6D3B') +
+        makeSimpleBar('단백질', protein, 55, 'g', '#2E7D32') +
+        makeSimpleBar('지방', fat, 44, 'g', fat > 30 ? '#ef4444' : '#78716c');
+    }
+  }
+
+  function makeSimpleBar(label, val, max, unit, color) {
+    var pct = Math.min(Math.round((val / max) * 100), 100);
+    return '<div class="simple-bar">' +
+      '<div class="simple-bar-head"><span>' + label + '</span><span class="simple-bar-val">' + val + unit + '</span></div>' +
+      '<div class="simple-bar-track"><div class="simple-bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div></div>';
+  }
+
+  // ═══ NUTRITION (Detailed — Calendar) ═══
+  function getMealTip(menus) {
+    if (!menus || menus.length === 0) return "급식 정보가 아직 등록되지 않았어요.";
+
     var kcal = menus.reduce((acc, m) => acc + (m.kcal || 0), 0);
-    var advice = [];
+    var tips = [];
     var names = menus.map(m => m.name).join(' ');
 
-    // 카테고리 분석
     var hasMeats = /고기|불고기|닭|돈육|스테이크|햄|너겟|까스|살|Beef|Chicken|Pork/.test(names);
     var hasGreens = /샐러드|나물|무침|쌈|야채|채소|겉절이|Salad/.test(names);
     var hasFried = /튀김|까스|칩|치킨|강정|Fried/.test(names);
     var hasSodium = /국|개|탕|찌개|볶음|조림|Soup|Stew/.test(names);
 
-    if (kcal > 950) advice.push("열량이 꽤 높아요! 밥양을 조금 조절하고 많이 움직여볼까요? 🏃‍♂️");
-    else if (kcal < 550) advice.push("오늘은 아주 가벼운 식단이네요. 견과류나 우유를 더 챙겨 드셔도 좋겠어요! 🔋");
+    if (kcal > 950) tips.push("오늘은 든든한 식단! 밥을 조금 줄이면 딱 좋아요 🏃‍♂️");
+    else if (kcal < 550) tips.push("가벼운 식단이에요~ 간식으로 우유나 견과류 챙겨요! 🥛");
 
-    if (hasFried) advice.push("바삭한 튀김 메뉴가 있어요. 지방 함량이 높을 수 있으니 나물을 먼저 드셔보세요! 🥗");
-    if (!hasGreens) advice.push("오늘 식단에는 채소가 부족해 보여요. 비타민 보충을 위해 과일을 챙겨 드세요! 🍎");
-    if (hasMeats && hasGreens) advice.push("고기와 채소의 조화가 훌륭해요! 근육도 만들고 소화도 잘 되는 100점 식단입니다. ✨");
-    if (hasSodium && !hasGreens) advice.push("국물이 있는 메뉴는 나트륨이 높으니 국물보다는 건더기 위주로 드시는 걸 추천해요! 💧");
-    
-    if (advice.length === 0) advice.push("영양소가 골고루 갖춰진 균형 잡힌 식단입니다. 맛있게 즐기세요! 🍽️");
-    
-    return advice[advice.length - 1];
+    if (hasFried) tips.push("바삭한 튀김이 있네요! 나물 먼저 먹으면 속이 편해요 🥗");
+    if (!hasGreens) tips.push("채소가 좀 아쉬운 날, 간식으로 과일 어때요? 🍎");
+    if (hasMeats && hasGreens) tips.push("고기랑 채소가 딱 좋은 조합! 맛있게 먹어요 ✨");
+    if (hasSodium && !hasGreens) tips.push("국물은 건더기 위주로 먹으면 나트륨 걱정 끝! 💧");
+
+    if (tips.length === 0) tips.push("골고루 갖춰진 좋은 식단이에요, 맛있게 드세요! 🍽️");
+
+    return tips[tips.length - 1];
   }
 
   function renderNutrition(dateStr, containerPrefix, mealType) {
@@ -744,7 +863,7 @@
     if (kcalEl) kcalEl.textContent = totalKcal;
     
     var commentEl = $(containerPrefix + '-comment');
-    if (commentEl) commentEl.textContent = generateCoachAdvice(menus);
+    if (commentEl) commentEl.textContent = getMealTip(menus);
 
     // Radar Chart Logic
     var canvas = radarEl;
@@ -792,15 +911,15 @@
         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       }
       ctx.closePath();
-      ctx.fillStyle = 'rgba(16, 185, 129, 0.4)';
+      ctx.fillStyle = 'rgba(46, 125, 50, 0.35)';
       ctx.fill();
-      ctx.strokeStyle = '#10b981';
+      ctx.strokeStyle = '#2E7D32';
       ctx.lineWidth = 3; ctx.stroke();
     }
 
     // Labels
     ctx.fillStyle = (document.documentElement.classList.contains('dark') || window.matchMedia('(prefers-color-scheme: dark)').matches) ? '#cbd5e1' : '#64748b';
-    ctx.font = '700 12px Inter';
+    ctx.font = '700 12px Pretendard, sans-serif';
     ctx.textAlign = 'center';
     for (var i = 0; i < 6; i++) {
       var angle = (Math.PI * 2 / 6) * i - Math.PI / 2;
@@ -891,12 +1010,26 @@
   const ALLERGY_LIST = ['난류', '우유', '메밀', '땅콩', '대두', '밀', '고등어', '게', '새우', '돼지고기', '복숭아', '토마토', '아황산류', '호두', '닭고기', '쇠고기', '오징어', '조개류', '잣'];
 
   function renderProfile() {
-    if ($('profile-name')) $('profile-name').textContent = currentUser ? currentUser.name : 'Unknown';
-    if ($('profile-role')) $('profile-role').textContent = currentUser ? (currentUser.role === 'admin' ? '👨‍🍳 관리자' : '🧑‍🎓 학생') : '';
-    if ($('profile-initial')) $('profile-initial').textContent = currentUser ? currentUser.name.charAt(0) : '👤';
+    var anonSection = $('profile-anon');
+    var loggedInSection = $('profile-loggedin');
 
-    var adminBtn = $('admin-access-btn');
-    if (adminBtn) adminBtn.style.display = (currentUser && currentUser.role === 'admin') ? 'block' : 'none';
+    if (currentUser) {
+      // Show logged-in state
+      if (anonSection) anonSection.style.display = 'none';
+      if (loggedInSection) loggedInSection.style.display = '';
+
+      if ($('profile-name')) $('profile-name').textContent = currentUser.name;
+      if ($('profile-role')) $('profile-role').textContent = currentUser.role === 'admin' ? '👨‍🍳 관리자' : '🧑‍🎓 학생';
+      if ($('profile-initial')) $('profile-initial').textContent = currentUser.name.charAt(0);
+
+      var adminBtn = $('admin-access-btn');
+      if (adminBtn) adminBtn.style.display = (currentUser.role === 'admin') ? 'block' : 'none';
+    } else {
+      // Show anonymous state
+      if (anonSection) anonSection.style.display = '';
+      if (loggedInSection) loggedInSection.style.display = 'none';
+      return; // No need to render allergy grid
+    }
 
     var grid = $('allergy-toggle-grid');
     if (grid) {

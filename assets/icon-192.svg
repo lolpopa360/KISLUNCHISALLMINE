@@ -1,0 +1,17 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'>
+  <defs>
+    <clipPath id='r'>
+      <rect width='192' height='192' rx='34.90909090909091' ry='34.90909090909091'/>
+    </clipPath>
+  </defs>
+  <rect width='192' height='192' rx='34.90909090909091' ry='34.90909090909091' fill='#FF6D3B'/>
+  <!-- plate -->
+  <circle cx='96' cy='96' r='57.599999999999994' fill='white'/>
+  <circle cx='96' cy='96' r='42.24' fill='#FFF4EE'/>
+  <!-- fork left -->
+  <rect x='23.039999999999992' y='42.24' width='8.64' height='107.52000000000001' rx='3.84' fill='white'/>
+  <!-- knife right -->
+  <rect x='160.32' y='42.24' width='8.64' height='107.52000000000001' rx='3.84' fill='white'/>
+  <!-- 급 text -->
+  <text x='96' y='112.32' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='38.400000000000006' fill='#FF6D3B'>급</text>
+</svg>
