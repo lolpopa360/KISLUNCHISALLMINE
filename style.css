@@ -54,6 +54,41 @@
 
 html { font-size: 16px; -webkit-text-size-adjust: 100%; }
 
+/* ═══ DARK THEME ═══ */
+[data-theme="dark"] {
+  --bg: #1A1612;
+  --card: #252018;
+  --card-hover: #2E2820;
+  --text: #F0EDE8;
+  --text-2: #BDB5AB;
+  --text-3: #8A8077;
+  --text-placeholder: #5C554E;
+  --border: #3A332C;
+  --line: #3A332C;
+  --primary-soft: rgba(255,109,59,.14);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.3);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.4);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,.5);
+  --shadow-card: 0 2px 8px rgba(0,0,0,.25);
+  color-scheme: dark;
+}
+[data-theme="dark"] .cal-bottom-sheet {
+  background: #252018;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+[data-theme="dark"] .cbs-meal-item { background: #1A1612 !important; border-color: #3A332C !important; }
+[data-theme="dark"] .cbs-handle { background: #5C554E !important; }
+[data-theme="dark"] .cbs-nutrition-divider::before,
+[data-theme="dark"] .cbs-nutrition-divider::after { background: #3A332C !important; }
+[data-theme="dark"] .simple-bar-track { background: #3A332C; }
+[data-theme="dark"] .tip-toggle { background: #1A1612; border-color: #3A332C; }
+[data-theme="dark"] .auth-bg { background: #1A1612; }
+[data-theme="dark"] .appbar { background: rgba(26,22,18,.95); border-color: #3A332C; }
+[data-theme="dark"] .bottom-nav { background: rgba(26,22,18,.96); border-color: #3A332C; }
+[data-theme="dark"] .modal-sheet,
+[data-theme="dark"] .modal-box { background: #252018; }
+[data-theme="dark"] .form-input { background: #1A1612; border-color: #3A332C; color: var(--text); }
+
 body {
   font-family: var(--font-body);
   background: var(--bg);
@@ -1663,6 +1698,27 @@ input, select { font-family: inherit; }
   margin: 12px auto 40px;
   border: 1.5px solid var(--red);
   color: var(--red);
+}
+
+/* ═══ THEME TOGGLE ═══ */
+.theme-toggle-card { margin-bottom: 12px; }
+.theme-btn-group {
+  display: flex; gap: 10px; margin-top: 12px;
+}
+.theme-btn {
+  flex: 1; padding: 12px 0;
+  border-radius: var(--r);
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  color: var(--text-2);
+  font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; transition: all 0.15s;
+}
+.theme-btn.active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary);
 }
 
 /* ═══ UPLOAD MODAL ENHANCED ═══ */
