@@ -41,9 +41,10 @@
     return toDateStr(d);
   }
   function isTomorrowOnHome() {
-    var d = nowVN();
-    if (d.getUTCHours() >= 20) return true;
-    var dow = d.getUTCDay();
+    return nowVN().getUTCHours() >= 20;
+  }
+  function isWeekendOnHome() {
+    var dow = nowVN().getUTCDay();
     return dow === 0 || dow === 6;
   }
   function todayLabel() {
@@ -320,11 +321,13 @@
     // 타이틀 및 날짜 표시 업데이트
     var hmt = $('home-meal-title');
     var dd = $('date-display');
-    if (isTomorrowOnHome()) {
-      var _vnNow = nowVN();
-      var _isWeekend = _vnNow.getUTCDay() === 0 || _vnNow.getUTCDay() === 6;
-      if (hmt) hmt.textContent = _isWeekend ? '📅 월요일 식단' : '🌙 내일의 식단';
-      var _next = new Date(_vnNow.getTime() + 86400000);
+    if (isWeekendOnHome()) {
+      // 주말: 오늘 날짜 그대로 표시하되 "월요일 식단" 배지
+      if (hmt) hmt.textContent = '📅 월요일 식단';
+      if (dd) dd.textContent = todayLabel();
+    } else if (isTomorrowOnHome()) {
+      if (hmt) hmt.textContent = '🌙 내일의 식단';
+      var _next = new Date(nowVN().getTime() + 86400000);
       var days = ['일','월','화','수','목','금','토'];
       if (dd) dd.textContent = _next.getUTCFullYear() + '년 ' + (_next.getUTCMonth() + 1) + '월 ' + _next.getUTCDate() + '일 ' + days[_next.getUTCDay()] + '요일';
     } else {
