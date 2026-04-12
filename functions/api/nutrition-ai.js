@@ -8,7 +8,7 @@ export async function onRequestPost({ request, env }) {
       });
     }
 
-    const apiKey = env.GEMINI_API_KEY;
+    const apiKey = env.API_KEY;
     if (!apiKey) {
       return new Response(JSON.stringify({ error: 'API key not configured' }), {
         status: 500,
@@ -27,35 +27,33 @@ ${foodList}
 
 반드시 JSON 배열만 출력해. 설명이나 마크다운 없이 순수 JSON만.`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-    const geminiRes = await fetch(geminiUrl, {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 2048
-        }
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.1,
+        max_tokens: 2048
       })
     });
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      console.error('Gemini API error:', errText);
-      return new Response(JSON.stringify({ error: 'Gemini API 호출 실패', status: geminiRes.status, detail: errText.substring(0, 500) }), {
+    if (!res.ok) {
+      const errText = await res.text();
+      return new Response(JSON.stringify({ error: 'AI API 호출 실패', status: res.status, detail: errText.substring(0, 500) }), {
         status: 502,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    const geminiData = await geminiRes.json();
-    const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content || '';
 
-    // Extract JSON array from response (handle markdown code blocks)
-    let jsonStr = text.trim();
-    const jsonMatch = jsonStr.match(/\[[\s\S]*\]/);
+    // Extract JSON array from response
+    const jsonMatch = text.trim().match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
       return new Response(JSON.stringify({ error: 'AI 응답 파싱 실패', raw: text }), {
         status: 502,
@@ -69,7 +67,6 @@ ${foodList}
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (err) {
-    console.error('nutrition-ai error:', err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
