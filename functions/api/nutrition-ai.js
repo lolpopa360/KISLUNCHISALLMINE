@@ -44,7 +44,7 @@ ${foodList}
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
       console.error('Gemini API error:', errText);
-      return new Response(JSON.stringify({ error: 'Gemini API 호출 실패' }), {
+      return new Response(JSON.stringify({ error: 'Gemini API 호출 실패', status: geminiRes.status, detail: errText.substring(0, 500) }), {
         status: 502,
         headers: { 'Content-Type': 'application/json' }
       });
