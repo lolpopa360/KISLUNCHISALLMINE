@@ -498,8 +498,13 @@
 <script src="app.js"></script>
 <script>
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    window.addEventListener('load', async () => {
+      // Force clear all old caches and reinstall SW
+      var regs = await navigator.serviceWorker.getRegistrations();
+      for (var r of regs) { await r.unregister(); }
+      var keys = await caches.keys();
+      for (var k of keys) { await caches.delete(k); }
+      navigator.serviceWorker.register('/sw.js?v=8').catch(() => {});
     });
   }
 </script>
