@@ -1,4 +1,4 @@
-const CACHE_NAME = 'geupsik-v8';
+const CACHE_NAME = 'geupsik-v9';
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();

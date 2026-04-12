@@ -1,54 +1,57 @@
 /* ═══════════════════════════════════════════════
-   급식뭐지 — Cafeteria Fresh Design System
-   Jua typography · Warm tangerine · Handcrafted feel
+   급식뭐지 — Editorial Magazine Design System
+   Noto Serif KR · Burnt Sienna · Refined warmth
    ═══════════════════════════════════════════════ */
 
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
   color-scheme: light;
-  --primary: #FF6D3B;
-  --primary-dark: #E85D2A;
-  --primary-soft: #FFF4EE;
-  --primary-glow: rgba(255, 109, 59, 0.15);
+  --primary: #C2410C;
+  --primary-dark: #9A3412;
+  --primary-soft: #FFF7ED;
+  --primary-glow: rgba(194, 65, 12, 0.12);
 
-  --green: #2E7D32;
-  --green-dark: #1B5E20;
-  --green-soft: #E8F5E9;
+  --green: #166534;
+  --green-dark: #14532D;
+  --green-soft: #DCFCE7;
 
-  --bg: #F7F6F3;
+  --bg: #FAF7F2;
   --card: #FFFFFF;
-  --card-hover: #F5F4F1;
+  --card-hover: #F5F2ED;
 
-  --text: #1A1714;
-  --text-2: #5C544D;
-  --text-3: #8E857C;
-  --text-placeholder: #B5ADA5;
+  --text: #1C1917;
+  --text-2: #57534E;
+  --text-3: #A8A29E;
+  --text-placeholder: #D6D3D1;
 
-  --border: #E8E4DF;
-  --line: #E8E4DF;
+  --border: #E7E5E4;
+  --line: #E7E5E4;
 
-  --shadow-sm: 0 1px 2px rgba(26,23,20,.05);
-  --shadow-md: 0 4px 16px rgba(26,23,20,.07);
-  --shadow-lg: 0 12px 40px rgba(26,23,20,.12);
-  --shadow-card: 0 2px 8px rgba(26,23,20,.05);
+  --shadow-sm: 0 1px 2px rgba(28,25,23,.04);
+  --shadow-md: 0 4px 20px rgba(28,25,23,.06);
+  --shadow-lg: 0 16px 48px rgba(28,25,23,.1);
+  --shadow-card: 0 1px 3px rgba(28,25,23,.04), 0 4px 12px rgba(28,25,23,.03);
 
-  --amber: #F59E0B;
-  --orange: #F57C00;
-  --red: #D32F2F;
-  --blue: #1976D2;
-  --pink: #C2185B;
-  --purple: #7B1FA2;
-  --cyan: #00838F;
+  --amber: #D97706;
+  --orange: #EA580C;
+  --red: #DC2626;
+  --blue: #2563EB;
+  --pink: #DB2777;
+  --purple: #7C3AED;
+  --cyan: #0891B2;
+  --gold: #B45309;
 
-  --r: 14px;
-  --r-lg: 18px;
-  --r-xl: 24px;
+  --r: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
 
-  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --spring: cubic-bezier(0.22, 1.2, 0.36, 1);
 
-  --font-display: 'Jua', 'Pretendard Variable', sans-serif;
+  --font-display: 'Noto Serif KR', 'Georgia', serif;
+  --font-brand: 'Jua', sans-serif;
   --font-body: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
@@ -56,38 +59,40 @@ html { font-size: 16px; -webkit-text-size-adjust: 100%; }
 
 /* ═══ DARK THEME ═══ */
 [data-theme="dark"] {
-  --bg: #1A1612;
-  --card: #252018;
-  --card-hover: #2E2820;
-  --text: #F0EDE8;
-  --text-2: #BDB5AB;
-  --text-3: #8A8077;
-  --text-placeholder: #5C554E;
-  --border: #3A332C;
-  --line: #3A332C;
-  --primary-soft: rgba(255,109,59,.14);
-  --shadow-sm: 0 1px 2px rgba(0,0,0,.3);
-  --shadow-md: 0 4px 16px rgba(0,0,0,.4);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,.5);
-  --shadow-card: 0 2px 8px rgba(0,0,0,.25);
+  --bg: #171412;
+  --card: #231F1B;
+  --card-hover: #2C2722;
+  --text: #F5F5F4;
+  --text-2: #D6D3D1;
+  --text-3: #78716C;
+  --text-placeholder: #44403C;
+  --border: #2E2A26;
+  --line: #2E2A26;
+  --primary-soft: rgba(194,65,12,.12);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+  --shadow-md: 0 4px 20px rgba(0,0,0,.5);
+  --shadow-lg: 0 16px 48px rgba(0,0,0,.6);
+  --shadow-card: 0 1px 3px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.2);
   color-scheme: dark;
 }
 [data-theme="dark"] .cal-bottom-sheet {
-  background: #252018;
-  border-top: 1px solid rgba(255,255,255,.06);
+  background: #231F1B;
+  border-top: 1px solid rgba(255,255,255,.05);
 }
-[data-theme="dark"] .cbs-meal-item { background: #1A1612 !important; border-color: #3A332C !important; }
-[data-theme="dark"] .cbs-handle { background: #5C554E !important; }
+[data-theme="dark"] .cbs-meal-item { background: #171412 !important; border-color: #2E2A26 !important; }
+[data-theme="dark"] .cbs-handle { background: #57534E !important; }
 [data-theme="dark"] .cbs-nutrition-divider::before,
-[data-theme="dark"] .cbs-nutrition-divider::after { background: #3A332C !important; }
-[data-theme="dark"] .simple-bar-track { background: #3A332C; }
-[data-theme="dark"] .tip-toggle { background: #1A1612; border-color: #3A332C; }
-[data-theme="dark"] .auth-bg { background: #1A1612; }
-[data-theme="dark"] .appbar { background: rgba(26,22,18,.95); border-color: #3A332C; }
-[data-theme="dark"] .bottom-nav { background: rgba(26,22,18,.96); border-color: #3A332C; }
+[data-theme="dark"] .cbs-nutrition-divider::after { background: #2E2A26 !important; }
+[data-theme="dark"] .simple-bar-track { background: #2E2A26; }
+[data-theme="dark"] .tip-toggle { background: #171412; border-color: #2E2A26; }
+[data-theme="dark"] .auth-bg { background: #171412; }
+[data-theme="dark"] .appbar { background: rgba(23,20,18,.97); border-color: #2E2A26; }
+[data-theme="dark"] .bottom-nav { background: rgba(23,20,18,.97); border-color: #2E2A26; }
 [data-theme="dark"] .modal-sheet,
-[data-theme="dark"] .modal-box { background: #252018; }
-[data-theme="dark"] .form-input { background: #1A1612; border-color: #3A332C; color: var(--text); }
+[data-theme="dark"] .modal-box { background: #231F1B; }
+[data-theme="dark"] .form-input { background: #171412; border-color: #2E2A26; color: var(--text); }
+[data-theme="dark"] .mc-visual { background: #1C1917 !important; }
+[data-theme="dark"] .auth-bg { background: linear-gradient(155deg, #78350F 0%, #451A03 50%, #1C1917 100%); }
 
 body {
   font-family: var(--font-body);
@@ -97,18 +102,19 @@ body {
   min-height: 100dvh;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
 }
 
-/* Subtle grain texture — makes it feel printed, not digital */
+/* Paper grain texture — editorial print feel */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   z-index: 10000;
   pointer-events: none;
-  background-image: radial-gradient(circle, var(--text) 0.4px, transparent 0.4px);
-  background-size: 20px 20px;
-  opacity: 0.012;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+  opacity: 0.4;
 }
 
 img { max-width: 100%; height: auto; display: block; }
@@ -153,9 +159,9 @@ input, select { font-family: inherit; }
 .auth-bg {
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 38%;
-  background: linear-gradient(155deg, #FF6D3B 0%, #FFB74D 50%, #FFD54F 100%);
-  border-radius: 0 0 32px 32px;
+  height: 42%;
+  background: linear-gradient(155deg, #C2410C 0%, #EA580C 40%, #F59E0B 100%);
+  border-radius: 0 0 40px 40px;
   z-index: 0;
   overflow: hidden;
 }
@@ -222,14 +228,14 @@ input, select { font-family: inherit; }
 }
 
 .auth-title {
-  font-family: var(--font-display);
-  font-size: 36px;
+  font-family: var(--font-brand);
+  font-size: 38px;
   font-weight: 400;
   letter-spacing: -.02em;
   color: #fff;
-  text-shadow: 0 2px 8px rgba(0,0,0,.08);
+  text-shadow: 0 2px 12px rgba(0,0,0,.15);
 }
-.auth-title span { color: #fff; opacity: .85; }
+.auth-title span { color: #FDE68A; }
 .auth-sub {
   font-size: 14px;
   color: rgba(255,255,255,.85);
@@ -327,23 +333,24 @@ input, select { font-family: inherit; }
 .btn-primary {
   width: 100%;
   padding: 16px;
-  background: linear-gradient(135deg, var(--primary) 0%, #FF8F5E 100%);
+  background: var(--primary);
   color: #fff;
   border: none;
-  border-radius: 14px;
-  font-size: 16px;
+  border-radius: var(--r);
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: -.01em;
-  box-shadow: 0 4px 16px rgba(255,109,59,.25), 0 1px 3px rgba(255,109,59,.15);
+  letter-spacing: .02em;
+  box-shadow: 0 2px 8px rgba(194,65,12,.2);
   transition: all .2s var(--ease);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  text-transform: uppercase;
 }
 .btn-primary:active {
   transform: scale(.97);
-  box-shadow: 0 2px 8px rgba(255,109,59,.2);
+  box-shadow: 0 1px 4px rgba(194,65,12,.15);
 }
 .btn-primary:focus-visible {
   outline: 3px solid var(--primary-glow);
@@ -391,7 +398,7 @@ input, select { font-family: inherit; }
 /* ═══ APPBAR ═══ */
 .appbar {
   height: 56px;
-  background: #fff;
+  background: var(--card);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -402,15 +409,17 @@ input, select { font-family: inherit; }
 }
 .appbar-left { display: flex; align-items: center; gap: 10px; }
 .appbar-mascot {
-  width: 34px; height: 34px;
-  border-radius: 10px;
+  width: 36px; height: 36px;
+  border-radius: 50%;
   overflow: hidden;
   background: var(--primary-soft);
   display: flex; align-items: center; justify-content: center;
+  animation: mascotWiggle 3s ease-in-out infinite;
+  animation-delay: 1s;
 }
 .appbar-mascot img { width: 100%; height: 100%; object-fit: cover; }
 .appbar-title {
-  font-family: var(--font-display);
+  font-family: var(--font-brand);
   font-size: 20px;
   font-weight: 400;
   letter-spacing: -.01em;
@@ -484,20 +493,23 @@ input, select { font-family: inherit; }
    HOME PAGE
    ═══════════════════════════════════ */
 .home-welcome {
-  padding: 20px 20px 8px;
+  padding: 24px 20px 8px;
 }
 .welcome-hi {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--text-3);
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
 .home-welcome h2 {
   font-family: var(--font-display);
-  font-size: clamp(22px, 5.5vw, 28px);
-  font-weight: 400;
-  letter-spacing: -.02em;
+  font-size: clamp(24px, 6vw, 32px);
+  font-weight: 900;
+  letter-spacing: -.03em;
   color: var(--text);
-  margin-top: 2px;
+  margin-top: 4px;
+  line-height: 1.2;
 }
 
 /* Tabs */
@@ -580,7 +592,7 @@ input, select { font-family: inherit; }
 .menu-card:active { transform: scale(.97); }
 .menu-card:hover { box-shadow: var(--shadow-md); }
 
-/* Uniform warm cream for all card visuals — no rainbow */
+/* Warm parchment card top */
 .mc-visual {
   aspect-ratio: 1.1;
   display: flex;
@@ -588,7 +600,7 @@ input, select { font-family: inherit; }
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background: #FFF8F2;
+  background: linear-gradient(145deg, #FFF7ED, #FFEDD5);
 }
 
 .mc-ring {
@@ -618,6 +630,7 @@ input, select { font-family: inherit; }
   padding: 10px 14px 14px;
 }
 .mc-name {
+  font-family: var(--font-display);
   font-size: 14px;
   font-weight: 700;
   color: var(--text);
@@ -1017,8 +1030,10 @@ input, select { font-family: inherit; }
 .tip-title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: 17px;
+  font-weight: 900;
   color: var(--text);
+  letter-spacing: -.02em;
 }
 
 /* Kcal hero number */
@@ -1028,10 +1043,11 @@ input, select { font-family: inherit; }
 }
 .home-kcal-display strong {
   font-family: var(--font-display);
-  font-size: 52px;
+  font-size: 56px;
   line-height: 1;
-  letter-spacing: -2px;
+  letter-spacing: -3px;
   color: var(--text);
+  font-weight: 900;
 }
 .home-kcal-display span {
   font-size: 15px; font-weight: 700; color: var(--text-3);
@@ -1259,7 +1275,7 @@ input, select { font-family: inherit; }
 /* ═══ BOTTOM NAV ═══ */
 .bottom-nav {
   height: 58px;
-  background: #fff;
+  background: var(--card);
   border-top: 1px solid var(--border);
   display: flex;
   flex-shrink: 0;
@@ -2083,3 +2099,200 @@ input, select { font-family: inherit; }
 .modal-desc { font-size: 14px; color: var(--text-2); line-height: 1.6; margin-bottom: 24px; }
 .modal-actions { display: flex; gap: 12px; }
 .modal-actions button { flex: 1; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; }
+
+/* ═══════════════════════════════════════════════
+   MASCOT ANIMATIONS
+   ═══════════════════════════════════════════════ */
+
+/* Gentle wiggle for appbar mascot */
+@keyframes mascotWiggle {
+  0%, 100% { transform: rotate(0deg); }
+  15% { transform: rotate(-8deg); }
+  30% { transform: rotate(6deg); }
+  45% { transform: rotate(-4deg); }
+  60% { transform: rotate(2deg); }
+  75% { transform: rotate(0deg); }
+}
+
+/* Breathing float for auth mascot */
+@keyframes mascotFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-6px) rotate(2deg); }
+  75% { transform: translateY(4px) rotate(-1deg); }
+}
+.auth-mascot {
+  animation: mascotFloat 4s ease-in-out infinite !important;
+}
+
+/* Peek-in for empty state mascot */
+@keyframes mascotPeek {
+  0% { transform: translateY(20px) scale(0.8); opacity: 0; }
+  60% { transform: translateY(-4px) scale(1.05); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.empty-mascot img,
+.empty-mascot span {
+  animation: mascotPeek 0.8s var(--spring) both;
+}
+
+/* Thumbs-up bounce for success states */
+@keyframes mascotCelebrate {
+  0% { transform: scale(1) rotate(0); }
+  20% { transform: scale(1.15) rotate(-5deg); }
+  40% { transform: scale(0.95) rotate(3deg); }
+  60% { transform: scale(1.05) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+/* ═══════════════════════════════════════════════
+   EDITORIAL PAGE REVEAL ANIMATIONS
+   ═══════════════════════════════════════════════ */
+
+/* Staggered reveal for home page elements */
+.home-welcome {
+  animation: editorialReveal 0.6s var(--ease) both;
+}
+.tab-bar {
+  animation: editorialReveal 0.6s var(--ease) 0.08s both;
+}
+.menu-grid {
+  animation: editorialReveal 0.6s var(--ease) 0.16s both;
+}
+.tip-card.home-tip {
+  animation: editorialReveal 0.7s var(--ease) 0.24s both;
+}
+
+@keyframes editorialReveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Card entrance — editorial slide-up with slight scale */
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Menu card hover micro-interaction */
+.menu-card {
+  transition: transform 0.25s var(--spring), box-shadow 0.25s ease;
+}
+.menu-card:active {
+  transform: scale(0.96) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* Emoji bounce on card hover */
+.mc-ring {
+  transition: transform 0.4s var(--spring);
+}
+.menu-card:active .mc-ring {
+  transform: scale(1.12) rotate(-5deg);
+}
+
+/* Editorial divider line */
+.tip-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0;
+}
+
+/* Refined toggle active state */
+.toggle-btn.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(194,65,12,.2);
+}
+
+/* ═══ EDITORIAL TYPOGRAPHY DETAILS ═══ */
+
+/* Section titles get serif treatment */
+.page-top h2 {
+  font-family: var(--font-display) !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.03em !important;
+}
+
+/* Calendar bottom sheet title */
+.cbs-header h3 {
+  font-family: var(--font-display) !important;
+  font-weight: 900 !important;
+}
+
+/* Detail page hero */
+.detail-hero h2 {
+  font-family: var(--font-display) !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.02em !important;
+}
+
+/* Admin panel titles */
+.admin-auth-logo h1,
+.admin-topbar-left h1 {
+  font-family: var(--font-brand) !important;
+}
+
+/* ═══ REFINED MICRO-INTERACTIONS ═══ */
+
+/* Smooth nav item tap */
+.nav-item {
+  transition: all 0.2s var(--ease);
+}
+.nav-item:active {
+  transform: scale(0.85);
+}
+.nav-item.active svg {
+  background: var(--primary-soft);
+  border-radius: 10px;
+  padding: 4px;
+  margin: -4px;
+}
+
+/* Toast slide-up refined */
+.toast {
+  border-radius: var(--r) !important;
+  font-size: 13px !important;
+  letter-spacing: 0.01em;
+  backdrop-filter: blur(12px);
+}
+
+/* Appbar button subtle pulse on active */
+.appbar-btn:active {
+  transform: scale(0.85);
+  background: var(--primary-soft);
+}
+
+/* Auth form card entrance */
+.auth-form {
+  animation: authFormIn 0.5s var(--ease) 0.3s both;
+}
+@keyframes authFormIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Meal badge subtle pulse */
+.meal-badge {
+  border: 1px solid rgba(194,65,12,.15) !important;
+}
