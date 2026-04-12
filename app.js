@@ -1061,6 +1061,53 @@
       viewMode.style.display = '';
     });
 
+    // AI auto-fill button
+    var aiBtn = $('nut-ai-fill');
+    if (aiBtn) {
+      aiBtn.addEventListener('click', async function() {
+        var dateStr = todayStr();
+        var mealType = $('home-toggle-lunch').classList.contains('active') ? 'lunch' : 'dinner';
+        var data = loadMeals(dateStr);
+        var menus = data ? (data[mealType] || []) : [];
+        if (menus.length === 0) { toast('메뉴가 없습니다'); return; }
+
+        var foodNames = menus.map(function(m) { return m.name; });
+        aiBtn.disabled = true;
+        aiBtn.textContent = '⏳';
+
+        try {
+          var res = await fetch('/api/nutrition-ai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ foods: foodNames })
+          });
+          var result = await res.json();
+          if (res.ok && result.results) {
+            var totals = { kcal: 0, p: 0, f: 0, c: 0, na: 0 };
+            result.results.forEach(function(r) {
+              totals.kcal += (r.kcal || 0);
+              totals.p += (r.p || 0);
+              totals.f += (r.f || 0);
+              totals.c += (r.c || 0);
+              totals.na += (r.na || 0);
+            });
+            $('nut-e-kcal').value = Math.round(totals.kcal);
+            $('nut-e-p').value = Math.round(totals.p * 10) / 10;
+            $('nut-e-f').value = Math.round(totals.f * 10) / 10;
+            $('nut-e-c').value = Math.round(totals.c * 10) / 10;
+            $('nut-e-na').value = Math.round(totals.na);
+            toast('🤖 AI가 영양정보를 입력했습니다!');
+          } else {
+            toast('❌ AI 조회 실패');
+          }
+        } catch(e) {
+          toast('❌ 네트워크 오류');
+        }
+        aiBtn.disabled = false;
+        aiBtn.textContent = '🤖 AI';
+      });
+    }
+
     saveBtn.addEventListener('click', async function() {
       var dateStr = todayStr();
       var mealType = $('home-toggle-lunch').classList.contains('active') ? 'lunch' : 'dinner';
