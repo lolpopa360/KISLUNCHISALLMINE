@@ -122,6 +122,12 @@
       <div class="empty-editor" id="dinner-empty">메뉴를 추가해주세요</div>
     </section>
 
+    <!-- AI AUTO-FILL -->
+    <div class="admin-actions" style="margin-bottom:0;">
+      <button class="btn-primary btn-lg" id="btn-ai-fill" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);width:100%;">🤖 AI 영양정보 자동입력 (Gemini)</button>
+    </div>
+    <p id="ai-fill-status" style="text-align:center;font-size:12px;color:var(--gray-dark);margin:4px 0 12px;display:none;"></p>
+
     <!-- ACTIONS -->
     <div class="admin-actions">
       <button class="btn-primary btn-lg" id="btn-save">💾 저장하기</button>
@@ -263,6 +269,76 @@
     pickDate.addEventListener('change', function(){ loadDate(this.value); });
     document.getElementById('add-lunch').addEventListener('click', function(){ addRow('lunch'); });
     document.getElementById('add-dinner').addEventListener('click', function(){ addRow('dinner'); });
+
+    // ═══ AI 영양정보 자동입력 ═══
+    document.getElementById('btn-ai-fill').addEventListener('click', async function(){
+      var btn = this;
+      var status = document.getElementById('ai-fill-status');
+
+      // Collect all food names that are missing nutrition (kcal = 0 or empty)
+      var foodsToFill = [];
+      var rowMap = []; // track which rows need filling
+
+      ['lunch', 'dinner'].forEach(function(type) {
+        var rows = document.getElementById(type + '-list').querySelectorAll('.editor-row');
+        for (var i = 0; i < rows.length; i++) {
+          var nameInput = rows[i].querySelector('.fi-name');
+          var kcalInput = rows[i].querySelector('.fi-kcal');
+          var name = nameInput ? nameInput.value.trim() : '';
+          var kcal = kcalInput ? parseInt(kcalInput.value) : 0;
+          if (name && !kcal) {
+            foodsToFill.push(name);
+            rowMap.push({ type: type, row: rows[i], name: name });
+          }
+        }
+      });
+
+      if (foodsToFill.length === 0) {
+        toast('✅ 모든 메뉴에 영양정보가 입력되어 있습니다');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '🤖 AI 분석 중...';
+      status.style.display = '';
+      status.textContent = foodsToFill.length + '개 메뉴 영양정보 조회 중...';
+
+      try {
+        var res = await fetch('/api/nutrition-ai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ foods: foodsToFill })
+        });
+        var data = await res.json();
+
+        if (!res.ok || !data.results) {
+          toast('❌ AI 조회 실패: ' + (data.error || '알 수 없는 오류'));
+          return;
+        }
+
+        var filled = 0;
+        for (var i = 0; i < rowMap.length; i++) {
+          var row = rowMap[i].row;
+          var result = data.results[i];
+          if (!result) continue;
+
+          var kcalInput = row.querySelector('.fi-kcal');
+          if (kcalInput && result.kcal) {
+            kcalInput.value = Math.round(result.kcal);
+            filled++;
+          }
+        }
+
+        toast('🤖 AI가 ' + filled + '개 메뉴의 영양정보를 입력했습니다!');
+        status.textContent = '✅ 완료! 값을 확인하고 저장하세요.';
+      } catch(err) {
+        toast('❌ 네트워크 오류: ' + err.message);
+        status.textContent = '';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🤖 AI 영양정보 자동입력 (Gemini)';
+      }
+    });
 
     document.getElementById('btn-parse-bulk').addEventListener('click', function(){
       var txt = document.getElementById('bulk-text').value;

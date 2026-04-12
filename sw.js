@@ -1,4 +1,4 @@
-const CACHE_NAME = 'geupsik-v1';
+const CACHE_NAME = 'geupsik-v5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
