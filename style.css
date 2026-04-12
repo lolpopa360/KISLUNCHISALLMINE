@@ -1064,15 +1064,15 @@ input, select { font-family: inherit; }
   padding: 4px 0;
 }
 .nut-edit-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  display: flex; align-items: center; gap: 10px;
 }
 .nut-edit-row label {
   font-size: 14px; font-weight: 700; color: var(--text-2);
-  min-width: 60px;
+  width: 60px; flex-shrink: 0;
 }
 .nut-input-wrap {
   display: flex; align-items: center; gap: 6px;
-  flex: 1; max-width: 180px;
+  flex: 1;
 }
 .nut-input-wrap input {
   flex: 1;

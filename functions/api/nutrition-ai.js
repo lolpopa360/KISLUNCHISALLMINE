@@ -18,14 +18,22 @@ export async function onRequestPost({ request, env }) {
 
     const foodList = foods.map((f, i) => `${i + 1}. ${f}`).join('\n');
 
-    const prompt = `다음 한국 학교 급식 메뉴의 1인분 영양정보를 JSON 배열로 알려줘.
-각 항목은 반드시 이 형식이어야 해:
-{"name": "음식명", "kcal": 숫자, "p": 단백질(g), "f": 지방(g), "c": 탄수화물(g), "na": 나트륨(mg)}
+    const prompt = `너는 한국 학교 급식 영양사야. 다음 급식 메뉴의 1인분(학교 급식 기준 배식량) 영양성분을 정확하게 알려줘.
+
+참고 기준:
+- 밥류: 1공기(210g) 기준
+- 국/찌개: 1그릇(250ml) 기준
+- 반찬: 학교 급식 1인 배식량 기준 (약 60~80g)
+- 나트륨은 한국 음식 특성상 정확하게 (김치류 500~700mg, 국류 800~1200mg 등)
+- 식품의약품안전처 식품영양성분 데이터베이스 기준으로 답변
+
+각 항목을 이 JSON 형식으로:
+{"name":"음식명","kcal":숫자,"p":단백질g,"f":지방g,"c":탄수화물g,"na":나트륨mg}
 
 음식 목록:
 ${foodList}
 
-반드시 JSON 배열만 출력해. 설명이나 마크다운 없이 순수 JSON만.`;
+JSON 배열만 출력. 설명 없이.`;
 
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
