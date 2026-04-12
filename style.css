@@ -1092,19 +1092,25 @@ input, select { font-family: inherit; }
   min-width: 24px;
 }
 .nut-edit-actions {
-  display: flex; gap: 10px; margin-top: 4px;
+  display: flex; gap: 8px; margin-top: 4px;
 }
 .nut-cancel-btn {
-  flex: 1; padding: 12px; border-radius: 10px;
+  flex: 1; padding: 12px 8px; border-radius: 10px;
   border: 1.5px solid var(--border); background: var(--bg);
-  font-size: 14px; font-weight: 700; color: var(--text-2);
-  cursor: pointer;
+  font-size: 13px; font-weight: 700; color: var(--text-2);
+  cursor: pointer; white-space: nowrap;
+}
+.nut-ai-btn {
+  flex: 1.2; padding: 12px 8px; border-radius: 10px;
+  border: none; color: #fff;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
 }
 .nut-save-btn {
-  flex: 2; padding: 12px; border-radius: 10px;
+  flex: 1.5; padding: 12px 8px; border-radius: 10px;
   border: none; background: var(--primary); color: #fff;
-  font-size: 14px; font-weight: 700;
-  cursor: pointer;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
   box-shadow: 0 2px 8px rgba(255,109,59,.25);
 }
 
